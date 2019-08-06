@@ -1,6 +1,6 @@
 {
   "name": "@recore/obx",
-  "version": "0.1.0-alpha.2",
+  "version": "0.8.0",
   "scripts": {
     "clean": "rm -fR ./observable && rm -f *.js && rm -f *.d.ts",
     "build": "npm run clean && tsc -p tsconfig.build.json"
@@ -19,7 +19,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@recore/utils": "^0.1.0-alpha.0",
+    "@recore/utils": "^0.8.0",
     "react": "^16.7.0",
     "tslib": "^1.10.0"
   },

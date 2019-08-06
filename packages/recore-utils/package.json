@@ -1,6 +1,6 @@
 {
   "name": "@recore/utils",
-  "version": "0.1.0-alpha.2",
+  "version": "0.8.0",
   "scripts": {
     "clean": "rm -f *.js && rm -f *.d.ts",
     "build": "npm run clean && tsc -p tsconfig.build.json"
