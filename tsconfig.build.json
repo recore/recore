@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["es5", "es2015", "es2016", "es2017", "esnext"],
+    "importHelpers": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "newLine": "LF",
+    "removeComments": true,
+    "target": "es2015"
+  }
+}

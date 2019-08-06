@@ -1,0 +1,23 @@
+{
+  "packages": [
+    "packages/recore-obx",
+    "packages/recore-utils"
+  ],
+  "command": {
+    "bootstrap": {
+      "npmClientArgs": [
+        "--no-package-lock"
+      ]
+    },
+    "publish": {
+      "conventionalCommits": true,
+      "ignoreChanges": [
+        "ignored-file",
+        "*.md"
+      ],
+      "message": "chore(release): publish"
+    }
+  },
+  "npmClient": "npm",
+  "version": "independent"
+}

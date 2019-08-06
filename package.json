@@ -1,0 +1,29 @@
+{
+  "private": true,
+  "name": "recore",
+  "author": "onbing",
+  "version": "1.0.0",
+  "description": "An reactive & highly integrated React-based web framework",
+  "typings": "index.d.ts",
+  "README": "README.md",
+  "homepage": "https://www.yuque.com/recore/docs",
+  "bugs": "https://github.com/recore/recore/issues",
+  "scripts": {
+    "reinstall": "./scripts/reinstall.sh",
+    "bootstrap": "lerna bootstrap",
+    "clean": "lerna run clean",
+    "build": "lerna run build",
+    "publish": "npm run build && lerna publish from-package"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/recore/recore.git"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/types": "^7.5.5",
+    "@types/node": "^12.6.9",
+    "tslint": "^5.18.0",
+    "typescript": "^3.5.3"
+  }
+}

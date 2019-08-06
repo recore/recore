@@ -1,0 +1,35 @@
+{
+  "defaultSeverity": "error",
+  "extends": ["tslint:latest"],
+  "jsRules": {},
+  "rules": {
+    "quotemark": [true, "single"],
+    "interface-name": false,
+    "object-literal-sort-keys": false,
+    "member-access": [true, "no-public"],
+    "ordered-imports": [true, {
+      "grouped-imports": true,
+      "import-sources-order": "any",
+      "named-imports-order": "any"
+    }],
+    "trailing-comma": [
+      true,
+      {
+        "multiline": {
+          "objects": "always",
+          "arrays": "always",
+          "imports": "always",
+          "exports": "always",
+          "functions": "never",
+          "typeLiterals": "ignore"
+        },
+        "esSpecCompliant": true
+      }
+    ],
+    "prefer-for-of": false,
+    "no-namespace": false,
+    "max-line-length": [true, {"limit": 120, "ignore-pattern": "^import |^export {(.*?)}|class [a-zA-Z]+ implements |//"}],
+    "no-submodule-imports": false
+  },
+  "rulesDirectory": []
+}
