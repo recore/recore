@@ -1,6 +1,6 @@
 {
   "name": "@recore/fx",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "An reactive & highly integrated React-based web framework",
   "scripts": {
     "test": "jest -c jest.config.js",
@@ -31,12 +31,12 @@
   "license": "MIT",
   "dependencies": {
     "@types/history": "^4.7.2",
-    "@types/react": "^16.7.20",
+    "@types/react": "^16",
     "classnames": "^2.2.6",
     "history": "^4.7.2",
     "path-to-regexp": "^2.4.0",
-    "react": "^16.7.0",
-    "react-dom": "^16.7.0"
+    "react": "^16",
+    "react-dom": "^16"
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",
