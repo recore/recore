@@ -1,6 +1,6 @@
 {
   "packages": [
-    "packages/recore-runtime"
+    "packages/recore-fx"
   ],
   "command": {
     "bootstrap": {

@@ -1,5 +1,5 @@
 {
-  "name": "@recore/runtime",
+  "name": "@recore/fx",
   "version": "0.8.0",
   "description": "An reactive & highly integrated React-based web framework",
   "scripts": {
@@ -19,7 +19,7 @@
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/recore/recore.git",
-    "directory": "packages/recore-runtime"
+    "directory": "packages/recore-fx"
   },
   "homepage": "https://www.yuque.com/recore/docs",
   "bugs": {

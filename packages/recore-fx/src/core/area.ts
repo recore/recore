@@ -71,11 +71,11 @@ export default class Area {
     return renderArea(this, () => create(Fragment, null, getChildren(this)));
   }
 
-  flow(...flows: Array<[true | (() => any), (area: Area) => ReactNode]>): ReactNode {
+  flow(...flows: Array<[true | ((area: Area) => any), (area: Area) => ReactNode]>): ReactNode {
     const l = flows.length;
     for (let i = 0; i < l; i++) {
       const [test, render] = flows[i];
-      const result = test === true || test();
+      const result = test === true || test(this);
       if (isDisplayError(result)) {
         return result;
       }
@@ -86,8 +86,9 @@ export default class Area {
     return null;
   }
 
-  loop(id: string | undefined, data: any, delegate: () => ReactNode, virtual: boolean = false): ReactNode {
+  loop(id: string | undefined, getLoopData: (area: Area) => any, delegate: () => ReactNode, virtual: boolean = false): ReactNode {
     return this.area(id, (area) => {
+      const data = getLoopData(area);
       if (isDisplayError(data)) {
         return data;
       }
@@ -170,7 +171,7 @@ export default class Area {
 
   }
 
-  child(config: AreaConfig): Area {
+  private child(config: AreaConfig): Area {
     if (config.id === this.id) {
       return this;
     }
@@ -205,7 +206,7 @@ export default class Area {
   }
 
   private marked: boolean = false;
-  produce(data: CursorData) {
+  private produce(data: CursorData) {
     const id = data.$id;
     if (!this.marked) {
       this.marked = true;
