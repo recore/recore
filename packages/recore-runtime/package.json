@@ -1,16 +1,27 @@
 {
   "name": "@recore/runtime",
-  "version": "0.1.0-alpha.1",
+  "version": "0.8.0",
+  "description": "An reactive & highly integrated React-based web framework",
   "scripts": {
-    "clean": "rm -f *.js && rm -f *.d.ts",
-    "build": "npm run clean && tsc -p tsconfig.build.json"
+    "test": "jest -c jest.config.js",
+    "build:commonjs": "cross-env BABEL_ENV=commonjs webpack",
+    "build:umd": "cross-env BABEL_ENV=umd NODE_ENV=development webpack",
+    "build:umd:min": "cross-env BABEL_ENV=umd NODE_ENV=production webpack",
+    "build": "npm run build:commonjs && npm run build:umd && npm run build:umd:min"
   },
+  "main": "lib/recore.js",
+  "files": [
+    "umd",
+    "lib",
+    "index.d.ts"
+  ],
+  "typings": "index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/recore/recore.git",
     "directory": "packages/recore-runtime"
   },
-  "homepage": "http://github.com/recore/recore",
+  "homepage": "https://www.yuque.com/recore/docs",
   "bugs": {
     "url": "http://github.com/recore/recore/issues"
   },
@@ -19,13 +30,47 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@recore/obx": "^0.1.0-alpha.0",
-    "@recore/utils": "^0.1.0-alpha.0",
+    "@types/history": "^4.7.2",
+    "@types/react": "^16.7.20",
     "classnames": "^2.2.6",
-    "tslib": "^1.10.0"
+    "history": "^4.7.2",
+    "path-to-regexp": "^2.4.0",
+    "react": "^16.7.0",
+    "react-dom": "^16.7.0"
   },
   "devDependencies": {
-    "@types/react": "^16.7.20"
+    "@babel/core": "^7.2.2",
+    "@babel/plugin-proposal-class-properties": "^7.3.0",
+    "@babel/plugin-proposal-decorators": "^7.3.0",
+    "@babel/plugin-proposal-export-default-from": "^7.0.0",
+    "@babel/plugin-proposal-export-namespace-from": "^7.0.0",
+    "@babel/plugin-proposal-function-sent": "^7.1.0",
+    "@babel/plugin-proposal-json-strings": "^7.0.0",
+    "@babel/plugin-proposal-numeric-separator": "^7.0.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.3.1",
+    "@babel/plugin-proposal-optional-chaining": "^7.0.0",
+    "@babel/plugin-proposal-throw-expressions": "^7.0.0",
+    "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+    "@babel/plugin-syntax-import-meta": "^7.0.0",
+    "@babel/plugin-transform-runtime": "^7.1.0",
+    "@babel/preset-env": "^7.3.1",
+    "@babel/preset-typescript": "^7.1.0",
+    "@babel/runtime": "^7.3.1",
+    "@types/classnames": "^2.2.7",
+    "@types/jest": "^21.1.5",
+    "@types/node": "^7.0.15",
+    "@types/react-dom": "^16",
+    "babel-loader": "^8.0.5",
+    "cross-env": "^5.1.1",
+    "jest": "latest",
+    "source-map-loader": "latest",
+    "ts-jest": "latest",
+    "tslint": "^5.12.1",
+    "tslint-react": "latest",
+    "typescript": "^3.2.4",
+    "typescript-tslint-plugin": "^0.5.4",
+    "webpack": "^3.5.6",
+    "webpack-dev-server": "^2.9.4"
   },
   "publishConfig": {
     "access": "public"

@@ -1,7 +1,6 @@
 {
   "packages": [
-    "packages/recore-obx",
-    "packages/recore-utils"
+    "packages/recore-runtime"
   ],
   "command": {
     "bootstrap": {
