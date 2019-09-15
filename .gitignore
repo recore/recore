@@ -5,8 +5,8 @@
 !/packages/*/src/**/*.js
 !/packages/*/src/**/*.d.ts
 /coverage/
-umd/
-lib/
+/packages/*/umd/
+/packages/*/lib/
 .idea/
 .vscode/
 .nyc_output
