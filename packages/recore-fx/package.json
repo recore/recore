@@ -1,6 +1,6 @@
 {
   "name": "@recore/fx",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "An reactive & highly integrated React-based web framework",
   "scripts": {
     "test": "jest -c jest.config.js",
