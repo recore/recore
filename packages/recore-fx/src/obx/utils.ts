@@ -44,7 +44,7 @@ function formatNestValue(nestPath: string, val: any): any {
     return val;
   }
 
-  const [ _, path, key ] = pathArray;
+  const [_, path, key] = pathArray;
 
   return formatNestValue(path, key ? { [key]: val } : val);
 }
@@ -80,7 +80,7 @@ export function $has(target: any, path: PropertyKey): boolean {
     }
   }
 
-  return hasObx(ret) ? getObx(ret)!.has(entry) : (entry in ret);
+  return hasObx(ret) ? getObx(ret)!.has(entry) : entry in ret;
 }
 
 export function $get(target: any, path: PropertyKey): any {
@@ -212,5 +212,3 @@ export function $extend(target: any, properties: object) {
   walk(properties, (_, key, val) => $set(target, key, val));
   endBatch();
 }
-
-

@@ -1,12 +1,13 @@
 import Area from './area';
 import { $get, $set, addHiddenFinalProp } from '../obx/utils';
 import { defineObxProperty } from '../obx/observable/obx-property';
-import { reportError } from '../lib';
+import { reportError, globalUtils } from '../lib/utils';
 import { ObxFlag } from '../obx/observable/obx';
 import { hasOwnProperty, setPrototypeOf } from '../utils';
 import { initializeDecoratorTarget } from '../obx';
 import { splitPath } from '../utils/split-path';
 import { ReactInstance } from 'react';
+import View from './view';
 
 export interface ActionConfig {
   name: string;
@@ -31,13 +32,20 @@ export interface PageRequest extends ComponentProps {
 export abstract class ViewController<T extends Object = PageRequest> {
   readonly $props: any = {};
   readonly $top = this;
-  readonly $utils: any = {};
+  readonly $utils: any;
+  readonly utils: any;
   readonly $refs: { [id: string]: ReactInstance | null } = {};
 
   constructor(props: T) {
     defineObxProperty(this, '$props', props, {}, ObxFlag.REF);
     defineObxProperty(this, '$refs', {}, {}, ObxFlag.VAL);
     defineObxProperty(this, '_views', {}, {}, ObxFlag.VAL);
+
+    const ControllerType: any = this.constructor;
+    const utils = ControllerType.utils || ControllerType.helpers || {};
+    setPrototypeOf(utils, globalUtils);
+    this.$utils = utils;
+    this.utils = utils;
   }
 
   readonly $root = new Area(this, { id: 'root' });
@@ -69,7 +77,7 @@ export abstract class ViewController<T extends Object = PageRequest> {
 
   _action(actions: FlowAction | FlowAction[]): () => void {
     if (!Array.isArray(actions)) {
-      actions = [ actions ];
+      actions = [actions];
     }
 
     const context = this;
@@ -88,7 +96,7 @@ export abstract class ViewController<T extends Object = PageRequest> {
     }
 
     const pathArray = splitPath(String(key));
-    const entry = pathArray && pathArray[1] || key;
+    const entry = (pathArray && pathArray[1]) || key;
 
     if (entry in this) {
       const ret = $get(this, key);
@@ -133,33 +141,58 @@ export abstract class ViewController<T extends Object = PageRequest> {
   }
 
   private _views: { [id: string]: any } = {};
-  // eg. $('@area/afe') get area
-  // eg. $('@area/afe:viewid') get area viewprops
   // eg. $('viewid') get current scope viewref
-  $(id: string): Area | {[key: string]: any} | any {
+  $(id: string, useRef: boolean = true) {
     if (!id) {
-      return {};
+      return null;
     }
-    const m = RE_AREA_VIEW.exec(id);
+
+    let m = RE_AREA_VIEW.exec(id);
     if (!m) {
       return null;
     }
-    if (!m[1]) {
-      return this._views[m[3]] || {};
+
+    const [ _, vid, sub ] = m;
+    const view = this._views[vid] || null;
+    if (!view || typeof view !== 'string') {
+      if (!view || !useRef) {
+        return view;
+      }
+      return view.$ref || view;
     }
 
-    const area = this.$root.get(m[1]);
-    if (!area) {
-      return {};
+    let path = view;
+    if (sub) {
+      let index = 0;
+      while (m = RE_INDEX.exec(sub.substring(index))) {
+        const p = path.replace(RE_STAR, `/${m[1]}$1`);
+        if (p === path) {
+          return null;
+        }
+        path = p;
+        index += m.index + m[0].length;
+      }
     }
-    if (!m[2]) {
-      return area;
-    }
-    return area.getView(m[2]);
+
+    return getView(this.$root.get(path), vid, useRef);
   }
 }
 
-const RE_AREA_VIEW = /^(?:(?:@([\w\-\/]+)(?:\:([\w\-]+))?)|([\w\-]+))$/;
+const RE_AREA_VIEW = /^([\w\-]+)((?:\[\d+\])*)$/;
+const RE_INDEX = /\[(\d+)\]/;
+const RE_STAR = /\/\*(\/|$)/;
+
+type Views = Array<null | View | View[] | Array<null | View | View[]>>;
+
+function getView(area: Area | Area[] | null, vid: string, useRef: boolean): null | View | Views {
+  if (!area) {
+    return null;
+  }
+  if (Array.isArray(area)) {
+    return area.map(a => getView(a, vid, useRef)) as any;
+  }
+  return area.getView(vid, useRef);
+}
 
 const supportProxy = 'Proxy' in global;
 
@@ -184,53 +217,55 @@ function readonlyTarget(target: any) {
 }
 
 function parseActions(actions: FlowAction[], context: any): any {
-  return actions.map((action: any) => {
-    if (!action) {
-      return null;
-    }
+  return actions
+    .map((action: any) => {
+      if (!action) {
+        return null;
+      }
 
-    if (Array.isArray(action)) {
-      const subActions = parseActions(action, context);
-      return {
-        name: 'ActionGroup',
-        fn: (...args: any[]) => {
-          const scope = args.pop();
-          return doAction(subActions, context, scope, args);
-        },
-      };
-    }
-
-    const t = typeof action;
-
-    if (t === 'function') {
-      return {
-        name: 'anonymous',
-        fn: action,
-      };
-    }
-
-    // recore-loader not support yet
-    if (t === 'string' && typeof context[action] === 'function') {
-      if (action in context) {
+      if (Array.isArray(action)) {
+        const subActions = parseActions(action, context);
         return {
-          name: action,
-          fn: context[action],
+          name: 'ActionGroup',
+          fn: (...args: any[]) => {
+            const scope = args.pop();
+            return doAction(subActions, context, scope, args);
+          },
         };
       }
+
+      const t = typeof action;
+
+      if (t === 'function') {
+        return {
+          name: 'anonymous',
+          fn: action,
+        };
+      }
+
+      // recore-loader not support yet
+      if (t === 'string' && typeof context[action] === 'function') {
+        if (action in context) {
+          return {
+            name: action,
+            fn: context[action],
+          };
+        }
+        return null;
+      }
+
+      // recore-loader not support yet
+      if (action.name && typeof context[action.name] === 'function') {
+        return {
+          name: action.name,
+          fn: context[action.name],
+          params: action.params,
+        };
+      }
+
       return null;
-    }
-
-    // recore-loader not support yet
-    if (action.name && typeof context[action.name] === 'function') {
-      return {
-        name: action.name,
-        fn: context[action.name],
-        params: action.params,
-      };
-    }
-
-    return null;
-  }).filter(Boolean);
+    })
+    .filter(Boolean);
 }
 
 function derive(parent: any, data: object) {
@@ -247,7 +282,7 @@ function doAction(queue: any[], context: any, scope: any, args: any[]) {
 
   let _resolve: () => void;
 
-  const i = new Promise((resolve) => {
+  const i = new Promise(resolve => {
     _resolve = resolve;
   });
 
@@ -265,7 +300,7 @@ function doAction(queue: any[], context: any, scope: any, args: any[]) {
         previousResult,
         ...item.params,
       });
-      res = item.fn.apply(context, args.concat([ actionContextData ]));
+      res = item.fn.apply(context, args.concat([actionContextData]));
     } catch (e) {
       return fail(e);
     }

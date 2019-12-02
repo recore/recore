@@ -37,20 +37,22 @@ export default function withRouter(Custom: any) {
 
     render() {
       const { wrappedComponentRef, ...originProps } = this.props;
-      return this.asRoutePage ? createElement(Custom, {
-        ...originProps,
-        ref: wrappedComponentRef
-      }) : createElement(RouteContext.Consumer, null, (ctx: RouteContext) => {
-        const { match, history, location } = ctx;
-        this.location = location;
-        return createElement(Custom, {
-          match,
-          location,
-          history,
-          ...originProps,
-          ref: wrappedComponentRef
-        });
-      });
+      return this.asRoutePage
+        ? createElement(Custom, {
+            ...originProps,
+            ref: wrappedComponentRef,
+          })
+        : createElement(RouteContext.Consumer, null, (ctx: RouteContext) => {
+            const { match, history, location } = ctx;
+            this.location = location;
+            return createElement(Custom, {
+              match,
+              location,
+              history,
+              ...originProps,
+              ref: wrappedComponentRef,
+            });
+          });
     }
   };
 }

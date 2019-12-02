@@ -71,9 +71,13 @@ export default class Router extends Component<RouterProps> {
         return null;
       }
 
-      return createElement(RouteContext.Provider, {
-        value: this.getSubContext(route!.path, match),
-      }, route!.children({ match, location, defined : route!.defined, ...rest }));
+      return createElement(
+        RouteContext.Provider,
+        {
+          value: this.getSubContext(route!.path, match),
+        },
+        route!.children({ match, location, defined: route!.defined, ...rest }),
+      );
     });
   }
 }

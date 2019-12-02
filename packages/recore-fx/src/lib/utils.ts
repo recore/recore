@@ -9,7 +9,7 @@ import Root from './router/root';
 import { hasOwnProperty, isObject } from '../utils';
 
 export function xId(obj: any, defaultKey: any): string {
-  return String(obj && obj.$id || defaultKey);
+  return String((obj && obj.$id) || defaultKey);
 }
 
 export interface ComponentsMap {
@@ -43,12 +43,15 @@ export function create(type: ReactType, props: any, children?: ReactNode[]) {
     return createElement(type, props);
   }
 
-  return createElement(type, props, ...children);
+  if (Array.isArray(children)) {
+    return createElement(type, props, ...children);
+  }
+
+  return createElement(type, props, children);
 }
 
 export class Registry {
-  constructor(private maps: ComponentsMap, private parent?: Registry) {
-  }
+  constructor(private maps: ComponentsMap, private parent?: Registry) {}
   get(type: ReactType): ReactType {
     if (typeof type === 'string') {
       const temp = getComponent(this.maps, type);
@@ -89,7 +92,7 @@ function register(maps: ComponentsMap, typeOrMaps: string | ComponentsMap, Compo
   if (typeof typeOrMaps === 'string' && Component) {
     maps[typeOrMaps] = Component;
   } else if (isObject(typeOrMaps)) {
-    Object.keys(typeOrMaps).forEach((key) => {
+    Object.keys(typeOrMaps).forEach(key => {
       maps[key] = typeOrMaps[key];
     });
   }
@@ -182,18 +185,18 @@ const ModifiersMap: Modifiers = {
     if (e.keyCode !== 39) {
       return false;
     }
-  }
+  },
 };
 
 export function xModifiers(modifiers: string | string[]) {
   if (!Array.isArray(modifiers)) {
     modifiers = modifiers.split('.');
   }
-  const modifierQueue = modifiers.map((modifier) => ModifiersMap[modifier]).filter(Boolean);
+  const modifierQueue = modifiers.map(modifier => ModifiersMap[modifier]).filter(Boolean);
 
   return (e: any): false | void => {
     if (e && e.nativeEvent) {
-      const brk = modifierQueue.some((fn) => fn(e) === false);
+      const brk = modifierQueue.some(fn => fn(e) === false);
       if (brk) {
         return false;
       }
@@ -226,7 +229,10 @@ export const globals: {
   reportError?: (err: any) => void;
 } = {};
 
-export function runApp(AppComponent: any, config: AppConfig = {}, exposeModule = false): any {
+export function runApp(AppComponent: any, config: AppConfig | (() => AppConfig) = {}, exposeModule = false): any {
+  if (typeof config === 'function') {
+    config = config();
+  }
   // init history
   navigator.init(config.history);
 
@@ -246,15 +252,18 @@ export function runApp(AppComponent: any, config: AppConfig = {}, exposeModule =
     globals.reportError = config.reportError;
   }
 
+  if (!AppComponent) {
+    return;
+  }
+
   if (exposeModule) {
     return (extraProps?: any) => {
-      return createElement(
-        Root, null,
-        (props: any) => createElement(AppComponent as ReactType, {
+      return createElement(Root, null, (props: any) =>
+        createElement(AppComponent as ReactType, {
           ...props,
           ...extraProps,
         }),
-      )
+      );
     };
   }
 
@@ -267,10 +276,12 @@ export function runApp(AppComponent: any, config: AppConfig = {}, exposeModule =
     container.id = containerId;
   }
 
-  render(createElement(
-    Root, null,
-    (props: any) => createElement(AppComponent as ReactType, {
-      ...props,
-    }),
-  ), container);
+  render(
+    createElement(Root, null, (props: any) =>
+      createElement(AppComponent as ReactType, {
+        ...props,
+      }),
+    ),
+    container,
+  );
 }

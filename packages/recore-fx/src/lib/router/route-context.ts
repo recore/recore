@@ -5,16 +5,13 @@ import navigator from '../navigator';
 const { Provider, Consumer } = createContext<RouteContext>({} as any);
 
 export default class RouteContext {
-
   get history() {
     return navigator.history!;
   }
   get location() {
     return this.history.location;
   }
-  constructor(
-    public match?: MatchResult
-  ){}
+  constructor(public match?: MatchResult) {}
 
   setMatch(match: MatchResult) {
     this.match = match;

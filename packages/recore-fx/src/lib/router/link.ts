@@ -1,5 +1,5 @@
 import { Component, createElement } from 'react';
-import { createLocation, LocationDescriptor } from 'history';
+import { createLocation, LocationDescriptor } from '@recore/history';
 import navigator from '../navigator';
 
 function isModifiedEvent(event: MouseEvent): boolean {
@@ -18,7 +18,7 @@ export default class Link extends Component<LinkProps> {
   static displayName = 'Link';
 
   static defaultProps = {
-    replace: false
+    replace: false,
   };
 
   handleClick = (event: MouseEvent) => {
@@ -51,9 +51,7 @@ export default class Link extends Component<LinkProps> {
     const { replace, to, ...rest } = this.props; // eslint-disable-line no-unused-vars
 
     const history = navigator.history!;
-    const location = typeof to === 'string'
-      ? createLocation(to, null, undefined, history.location)
-      : to;
+    const location = typeof to === 'string' ? createLocation(to, null, undefined, history.location) : to;
 
     const href = history.createHref(location);
 

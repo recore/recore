@@ -37,8 +37,7 @@ export function throttle(func: Function, wait: number) {
     const timeSinceLastInvoked = time - lastInvoked;
 
     return (
-      lastCalled === undefined || (timeSinceLastCalled >= wait)
-      || (timeSinceLastCalled < 0) || timeSinceLastInvoked >= wait
+      lastCalled === undefined || timeSinceLastCalled >= wait || timeSinceLastCalled < 0 || timeSinceLastInvoked >= wait
     );
   }
 

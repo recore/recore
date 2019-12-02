@@ -30,10 +30,9 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@types/history": "^4.7.2",
+    "@recore/history": "^4.11.0",
     "@types/react": "^16",
     "classnames": "^2.2.6",
-    "history": "^4.7.2",
     "path-to-regexp": "^2.4.0",
     "react": "^16",
     "react-dom": "^16"

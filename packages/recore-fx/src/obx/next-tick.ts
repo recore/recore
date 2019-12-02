@@ -13,7 +13,8 @@ function flush() {
 let timerFlush: () => void;
 if (typeof process === 'object' && process.nextTick) {
   timerFlush = () => process.nextTick(flush);
-} else if (typeof Promise === 'function') { // tslint:disable-line
+} else if (typeof Promise === 'function') {
+  // tslint:disable-line
   const timer = Promise.resolve(); // tslint:disable-line
   timerFlush = () => {
     timer.then(flush);
@@ -49,7 +50,7 @@ export function nextTick(callback?: () => void): Promise<any> {
     timerFlush();
   }
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     _resovle = resolve;
   });
 }

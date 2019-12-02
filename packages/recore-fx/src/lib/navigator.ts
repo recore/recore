@@ -6,7 +6,7 @@ import {
   createHashHistory,
   createMemoryHistory,
   LocationState,
-} from 'history';
+} from '@recore/history';
 import { invariant } from '../utils';
 
 export type HistoryMode = 'browser' | 'hash' | 'memory';
@@ -14,6 +14,20 @@ export type HistoryMode = 'browser' | 'hash' | 'memory';
 export type HistoryOptions = {
   mode?: HistoryMode;
 } & (HashHistoryBuildOptions | BrowserHistoryBuildOptions);
+
+function isHistory(obj: any): obj is History {
+  return obj && obj.push && obj.replace;
+}
+
+export function createHistory(options: HistoryOptions): History {
+  if (options.mode === 'hash') {
+    return createHashHistory(options);
+  }
+  if (options.mode === 'memory') {
+    return createMemoryHistory(options);
+  }
+  return createBrowserHistory(options);
+}
 
 export class Navigator {
   private options: HistoryOptions | null = {};
@@ -26,19 +40,16 @@ export class Navigator {
 
     invariant(this.options, 'should not use "navigator.history" before bootstrap');
 
-    const options: any = this.options || {};
+    this._history = createHistory(this.options || {});
 
-    if (options.mode === 'hash') {
-      this._history = createHashHistory(options);
-    } else if (options.mode === 'memory') {
-      this._history = createMemoryHistory(options);
-    } else {
-      this._history = createBrowserHistory(options);
-    }
     return this._history;
   }
 
-  init(options: HistoryMode | HistoryOptions = {}) {
+  init(options: HistoryMode | HistoryOptions | History = {}) {
+    if (isHistory(options)) {
+      this._history = options;
+      return;
+    }
     if (typeof options === 'string') {
       options = { mode: options };
     }

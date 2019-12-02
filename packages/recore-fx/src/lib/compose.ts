@@ -1,5 +1,5 @@
 import { ReactNode, Component, ReactElement } from 'react';
-import { Registry, globalUtils } from './utils';
+import { Registry } from './utils';
 import { ViewController } from '../core/view-controller';
 import { MatchResult } from './router/utils';
 import navigator from './navigator';
@@ -75,19 +75,16 @@ function parseQuery(search: string): object {
 export default function compose(render: RenderFunction, ControllerType?: any, routerView?: any) {
   invariant(
     render.compileVersion === 2,
-    `Project compiled result not suitable for current Recore version, please update "reload-loader" to 2.x`
+    `Project compiled result not suitable for current Recore version, please update "reload-loader" to 2.x`,
   );
 
   if (!ControllerType) {
-    ControllerType = class extends ViewController { };
+    ControllerType = class extends ViewController {};
   }
 
   const proto = ControllerType.prototype;
 
-  invariant(
-    proto instanceof ViewController,
-    `Controller ${ControllerType.name} must be extends "ViewController"`
-  );
+  invariant(proto instanceof ViewController, `Controller ${ControllerType.name} must be extends "ViewController"`);
 
   Object.defineProperty(proto, '__routerView', {
     configurable: false,
@@ -103,9 +100,6 @@ export default function compose(render: RenderFunction, ControllerType?: any, ro
   function createController(props: object) {
     const controller = new ControllerType(props);
     controller.$prerendering = prerendering;
-    const utils = (ControllerType.utils || ControllerType.helpers || {});
-    setPrototypeOf(utils, globalUtils);
-    controller.$utils = utils;
     controller.$registry = ControllerType.registry;
     return controller;
   }
@@ -118,11 +112,13 @@ export default function compose(render: RenderFunction, ControllerType?: any, ro
     if (match instanceof MatchResult) {
       const uri = loc.pathname + loc.search;
 
-      if (!controller || reload
-        || state.uri !== uri
-        || !shallowEqual(state.state, loc.state)
-        || !shallowEqual(state.extras, extras))
-      {
+      if (
+        !controller ||
+        reload ||
+        state.uri !== uri ||
+        !shallowEqual(state.state, loc.state) ||
+        !shallowEqual(state.extras, extras)
+      ) {
         const nextState: any = {
           uri,
           defined,
@@ -153,7 +149,7 @@ export default function compose(render: RenderFunction, ControllerType?: any, ro
       const params = {
         ...ControllerType.defaultProps,
         ...extras,
-      }
+      };
       controller = createController(params);
       controller.$enter(true, params);
       return {
@@ -163,7 +159,7 @@ export default function compose(render: RenderFunction, ControllerType?: any, ro
       const params = {
         ...ControllerType.defaultProps,
         ...extras,
-      }
+      };
       controller.$props = params;
       controller.$enter(false, params);
     }
@@ -222,7 +218,7 @@ export default function compose(render: RenderFunction, ControllerType?: any, ro
 
     render() {
       if (!this.state.controller) {
-        return null;
+        return '';
       }
 
       return render(this.state.controller);

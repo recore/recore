@@ -39,5 +39,3 @@ export function resetObx() {
 export { Reaction, reportChange, asNewValue, ObxFlag, autorun, nextTick, untracked, $get, $set, $del, $extend, $raw };
 export * from './decorators';
 export * from './observer';
-
-

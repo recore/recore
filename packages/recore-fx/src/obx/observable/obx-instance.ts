@@ -1,5 +1,5 @@
-import { DecoratorTarget } from "../decorators";
-import Obx from "./obx";
+import { DecoratorTarget } from '../decorators';
+import Obx from './obx';
 
 export default class ObxInstance extends Obx<DecoratorTarget> {
   set(key: PropertyKey, val: any) {

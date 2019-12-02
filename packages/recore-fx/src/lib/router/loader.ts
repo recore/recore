@@ -12,7 +12,9 @@ interface LoaderState {
   Component: any;
 }
 
-function interopRequireDefault(obj: any) { return obj && obj.__esModule ? obj.default : obj; }
+function interopRequireDefault(obj: any) {
+  return obj && obj.__esModule ? obj.default : obj;
+}
 
 // TODO: use React.lazy React.Suspense instead
 class Loader extends Component<LoaderProps, LoaderState> {

@@ -1,16 +1,17 @@
-import { Fragment, ReactNode, Component, ReactType, createElement } from "react";
-import { nextId } from "../obx/utils";
-import { Reaction } from "../obx/reaction";
-import { nextTick, obx, getReaction } from "../obx";
-import { hasOwnProperty } from "../utils";
-import { create } from "../lib";
-import X, { DisplayError, isDisplayError } from "../lib/x";
-import View from "./view";
-import { splitPath } from "../utils/split-path";
+import { Fragment, ReactNode, Component, ReactType, createElement } from 'react';
+import { nextId } from '../obx/utils';
+import { Reaction } from '../obx/reaction';
+import { nextTick, getReaction, computed } from '../obx';
+import { hasOwnProperty } from '../utils';
+import { create } from '../lib';
+import X, { DisplayError, isDisplayError } from '../lib/x';
+import View from './view';
+import { splitPath } from '../utils/split-path';
 
 export interface AreaConfig {
   id?: string;
   virtual?: boolean;
+  item?: boolean;
 }
 
 export interface CursorData {
@@ -25,6 +26,13 @@ export interface Scope {
   [property: string]: any;
 }
 
+const EMPTY_NODE = '';
+
+function isValidArrayIndex(val: any, limit: number = -1): boolean {
+  const n = parseFloat(String(val));
+  return n >= 0 && Math.floor(n) === n && isFinite(val) && (limit < 0 || n < limit);
+}
+
 export default class Area {
   readonly id: string;
   readonly virtual: boolean;
@@ -33,14 +41,36 @@ export default class Area {
   private areas: Area[] = [];
   private areaInstance?: Component;
   private reaction?: Reaction;
+  private isItem?: boolean;
 
-  constructor(public scope: Scope, { id, virtual }: AreaConfig, private parent?: Area) {
+  constructor(public scope: Scope, { id, virtual, item }: AreaConfig, private parent?: Area) {
     this.inExpression = !id;
     this.id = id || nextId();
     this.virtual = virtual === true;
+    this.isItem = item;
   }
 
-  get(path: string): Area | null {
+  get path(): null | string {
+    if (!this.parent) {
+      if (this.id === 'root') {
+        return '';
+      }
+      return null;
+    }
+
+    let pKey = this.parent.path;
+    if (pKey === null) {
+      return null;
+    }
+
+    if (pKey !== '') {
+      pKey += '/';
+    }
+    const key = this.isItem ? '*' : this.id;
+    return pKey + key;
+  }
+
+  get(path: string): Area | Area[] | null {
     const pathArray = splitPath(path);
 
     if (!pathArray) {
@@ -54,17 +84,28 @@ export default class Area {
       return this.get(nestPath);
     }
 
-    const ret = this.areasMap[entry];
+    let ret: any;
+    if (entry === '*') {
+      ret = this.areas;
+    } else if (isValidArrayIndex(entry, this.areas.length)) {
+      ret = this.areas[entry as any];
+    } else {
+      ret = this.areasMap[entry];
+    }
 
     if (!nestPath || ret == null) {
       return ret;
     }
 
-    return ret.get(nestPath);
+    return Array.isArray(ret) ? ret.map(r => r.get(nestPath)) : ret.get(nestPath);
   }
 
-  getView(id: string): View | null {
-    return this.views[id] || null;
+  getView(id: string, useRef: boolean = false): View | any | null {
+    const view = this.views[id] || null;
+    if (!view || !useRef) {
+      return view;
+    }
+    return view.$ref || view;
   }
 
   render(getChildren: (area: Area) => ReactNode[]) {
@@ -83,29 +124,44 @@ export default class Area {
         return render(this);
       }
     }
-    return null;
+    return EMPTY_NODE;
   }
 
-  loop(id: string | undefined, getLoopData: (area: Area) => any, delegate: () => ReactNode, virtual: boolean = false): ReactNode {
-    return this.area(id, (area) => {
-      const data = getLoopData(area);
-      if (isDisplayError(data)) {
-        return data;
-      }
-      return loop(data, delegate.bind(null, area));
-    }, virtual);
+  loop(
+    id: string | undefined,
+    getLoopData: (area: Area) => any,
+    delegate: () => ReactNode,
+    virtual: boolean = false,
+  ): ReactNode {
+    return this.area(
+      id,
+      area => {
+        const data = getLoopData(area);
+        if (isDisplayError(data)) {
+          return data;
+        }
+        return loop(data, delegate.bind(null, area));
+      },
+      virtual,
+    );
   }
 
   private views: { [id: string]: View } = {};
-  view(xid: string, getProps?: (scope: object, area: Area) => any[], getChildren?: (area: Area) => ReactNode[], getSlots?: (area: Area) => { [slot: string]: ReactNode }): ReactNode {
+  view(
+    xid: string,
+    getProps?: (scope: object, area: Area) => any[],
+    getChildren?: (area: Area) => ReactNode[],
+    getSlots?: (area: Area) => { [slot: string]: ReactNode },
+  ): ReactNode {
     const m = RE_XID.exec(xid);
     if (!m) {
-      return null;
+      return EMPTY_NODE;
     }
     const [_, areaid, tagName, id] = m;
     if (areaid) {
-      return this.area(areaid, (area) => area.view(`${tagName}#${id}`, getProps, getChildren, getSlots));
+      return this.area(areaid, area => area.view(`${tagName}#${id}`, getProps, getChildren, getSlots));
     }
+
     const component = this.scope.$registry.get(tagName);
     let view: View;
     if (id && hasOwnProperty(this.views, id)) {
@@ -124,7 +180,7 @@ export default class Area {
   }
 
   create(component: ReactType, props: any, children?: any) {
-    return create(component, props, children)
+    return create(component, props, children);
   }
 
   router(id: string, getProps?: (scope: object) => any[]) {
@@ -146,11 +202,7 @@ export default class Area {
     }
 
     // eg. ($scope) => $scope._('abc')
-    const e = obx.val({
-      get value() {
-        return tryRender(() => getExpr(scope, area));
-      }
-    });
+    const e = computed(() => tryRender(() => getExpr(scope, area)));
     this.exprs[id] = e;
     return e.value;
   }
@@ -166,10 +218,26 @@ export default class Area {
     return tryRender(() => renderArea(this.produce(data), render));
   }
 
-  // TODO: will support in 1.5.1
-  tpl(id: string, getProps: (scope: any) => any[], render: (area: Area) => ReactNode, virtual: boolean = false) {
-
+  // will support @1.6
+  tpl(id: string, render: (area: Area) => ReactNode) {
+    /*
+    const area = this;
+    function template(props: any) {
+      return render(area.temp({ props }));
+    }
+    this.scope._tpls[id] = template;
+    */
   }
+
+  /*
+  private temp(data: object) {
+    const scope = this.scope._derive(data);
+    return new Area(
+      scope,
+      { virtual: true, },
+      this,
+    );
+  }*/
 
   private child(config: AreaConfig): Area {
     if (config.id === this.id) {
@@ -229,10 +297,15 @@ export default class Area {
     }
 
     const scope = this.scope._derive(data);
-    area = new Area(scope, {
-      id,
-      virtual: this.virtual,
-    }, this);
+    area = new Area(
+      scope,
+      {
+        id,
+        virtual: this.virtual,
+        item: true,
+      },
+      this,
+    );
     this.areas.push(area);
     this.areasMap[id] = area;
 
@@ -277,7 +350,7 @@ export default class Area {
   }
 }
 
-const RE_XID = /^(?:@([\w\-]+):)?([\w]+)(?:#([\w\-]+))?/;
+const RE_XID = /^(?:@([\w\-]+):)?([\w\.]+)(?:#([\w\-]+))?/;
 
 function tryRender(render: () => any): any {
   try {
@@ -293,7 +366,7 @@ function iterMap(data: Map<any, any>, fn: (item: any, key: any) => void) {
 
 function iterSet(data: Set<any>, fn: (item: any, key: any) => void) {
   let index = 0;
-  data.forEach((item) => {
+  data.forEach(item => {
     fn(item, index++);
   });
 }
@@ -312,7 +385,7 @@ function loop(data: any, delegate: (key: string | number, val: any) => any) {
   }
 
   if (data) {
-    if ((data instanceof Set) || (data instanceof Map)) {
+    if (data instanceof Set || data instanceof Map) {
       const frags: any[] = [];
 
       const fn = (item: any, key: any): void => {
@@ -323,7 +396,7 @@ function loop(data: any, delegate: (key: string | number, val: any) => any) {
       return frags;
     }
 
-    return Object.keys(data).map((key) => {
+    return Object.keys(data).map(key => {
       return delegate(key, (data as any)[key]);
     });
   }
@@ -339,6 +412,6 @@ function renderArea(area: any, render: (area: any) => ReactNode) {
   return createElement(X, {
     key: area.id,
     area,
-    children: render,
+    render,
   });
 }

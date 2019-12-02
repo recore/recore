@@ -9,23 +9,31 @@ export interface XState {
 
 export interface XProps {
   area: Area;
-  children: (area: any) => any;
+  render: (area: any) => any;
 }
 
 function renderError(error: any): any {
   if (!error) {
-    return null;
+    return '';
   }
 
   reportError(error);
 
   const msg = error.stack || error.message || error;
   if (process.env.NODE_ENV !== 'production') {
-    return globals.renderError ? globals.renderError(error) : h('pre', { style: {
-      border: '1px solid #ffa39e',
-      backgroundColor: '#fff1f0',
-      padding: '8px 15px',
-    } }, `${msg}`);
+    return globals.renderError
+      ? globals.renderError(error)
+      : h(
+          'pre',
+          {
+            style: {
+              border: '1px solid #ffa39e',
+              backgroundColor: '#fff1f0',
+              padding: '8px 15px',
+            },
+          },
+          `${msg}`,
+        );
   }
 
   return globals.renderError ? globals.renderError(error) : 'Render Error';
@@ -36,46 +44,48 @@ export function DisplayError({ error }: { error: any }) {
 }
 
 export function isDisplayError(obj: any): obj is ReactNode {
- return obj && obj.type === DisplayError;
+  return obj && obj.type === DisplayError;
 }
 
-export default observer(class extends Component<XProps, XState> {
-  static displayName = 'X';
+export default observer(
+  class extends Component<XProps, XState> {
+    static displayName = 'X';
 
-  static getDerivedStateFromError(error: any) {
-    return { error };
-  }
-
-  state: XState  = { error: null };
-  private area: Area = this.props.area;
-
-  shouldComponentUpdate(nextProps: XProps, nextState: XState) {
-    if (nextProps.area !== this.area) {
-      this.area.purge();
-      this.area = nextProps.area;
-      return true;
-    }
-    return this.area.inExpression || nextState.error != null;
-  }
-
-  componentDidMount() {
-    this.area.connect(this);
-  }
-
-  componentDidUpdate() {
-    this.area.connect(this);
-  }
-
-  render() {
-    const { error } = this.state;
-    if (error) {
-      return renderError(error);
+    static getDerivedStateFromError(error: any) {
+      return { error };
     }
 
-    try {
-      return this.props.children(this.area);
-    } catch (e) {
-      return renderError(e);
+    state: XState = { error: null };
+    private area: Area = this.props.area;
+
+    shouldComponentUpdate(nextProps: XProps, nextState: XState) {
+      if (nextProps.area !== this.area) {
+        this.area.purge();
+        this.area = nextProps.area;
+        return true;
+      }
+      return this.area.inExpression || nextState.error != null;
     }
-  }
-});
+
+    componentDidMount() {
+      this.area.connect(this);
+    }
+
+    componentDidUpdate() {
+      this.area.connect(this);
+    }
+
+    render() {
+      const { error } = this.state;
+      if (error) {
+        return renderError(error);
+      }
+
+      try {
+        return this.props.render(this.area);
+      } catch (e) {
+        return renderError(e);
+      }
+    }
+  },
+);

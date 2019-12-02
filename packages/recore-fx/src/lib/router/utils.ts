@@ -49,7 +49,7 @@ export class MatchResult {
     public path: string = '/',
     public url: string = '/',
     public isExact: boolean = false,
-    public params: { [key: string]: any } = {}
+    public params: { [key: string]: any } = {},
   ) {}
 }
 
@@ -59,25 +59,20 @@ export class MatchResult {
 export function matchPath(
   pathname: string,
   options: MatchOptions | string = {},
-  parent?: MatchResult
+  parent?: MatchResult,
 ): MatchResult | null | undefined {
-  if (typeof options === "string") {
+  if (typeof options === 'string') {
     options = { path: options };
   }
 
-  let {
-    path,
-    exact = false,
-    strict = false,
-    sensitive = false,
-  } = options;
+  let { path, exact = false, strict = false, sensitive = false } = options;
 
   if (path == null) {
     return parent;
   }
 
   if (path.slice(-3) === '/**' || path === '**') {
-    path = path === '**' ? '' : (path.slice(0, -3) || '/');
+    path = path === '**' ? '' : path.slice(0, -3) || '/';
     exact = false;
   }
 
@@ -99,12 +94,12 @@ export function matchPath(
     path,
     path === '/' && url === '' ? '/' : url,
     isExact,
-    keys.reduce<{[k: string]: any}>((memo, key, index) => {
+    keys.reduce<{ [k: string]: any }>((memo, key, index) => {
       memo[key.name] = values[index];
       return memo;
-    }, {})
+    }, {}),
   );
-};
+}
 
 export interface MatchOptions {
   path?: string;
@@ -112,7 +107,6 @@ export interface MatchOptions {
   strict?: boolean;
   sensitive?: boolean;
 }
-
 
 /**
  * Public API for generating a URL pathname from a pattern and parameters.
@@ -173,12 +167,11 @@ export function resolve(id: string, base?: string): string {
   return normalize(id);
 }
 
-
 export function locationIs(loc1: any, loc2: any) {
   if (loc1 === loc2) {
     return true;
   }
-  if (!loc1 || !loc2 || (loc1.pathname + loc1.search) !== (loc2.pathname + loc2.search)) {
+  if (!loc1 || !loc2 || loc1.pathname + loc1.search !== loc2.pathname + loc2.search) {
     return false;
   }
   return shallowEqual(loc1.state, loc2.state);

@@ -71,7 +71,7 @@ export function shouldCompute(derivation: IDerivation): boolean {
   }
 }
 
-export function runDerivedFunction(derivation: IDerivation, f: (...args:any[]) => any, context?: any) {
+export function runDerivedFunction(derivation: IDerivation, f: (...args: any[]) => any, context?: any) {
   const prevTracking = globalState.trackingDerivation;
   // pre allocate array allocation + room for variation in deps
   derivation.newObserving = new Array(derivation.observing.length + 100);

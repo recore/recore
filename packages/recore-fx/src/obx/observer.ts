@@ -41,9 +41,7 @@ export function observer<T extends ComponentType<any>>(target: T): T {
     throw new Error('Please pass a valid component to "observer"');
   }
   if (typeof target !== 'function') {
-    throw new Error(
-      'obx observer: needs to be a react class constructor or stateless function components'
-    );
+    throw new Error('obx observer: needs to be a react class constructor or stateless function components');
   }
 
   let componentClass: any = target;
@@ -65,7 +63,7 @@ export function observer<T extends ComponentType<any>>(target: T): T {
   mixinLifecycleEvents(proto);
   componentClass.isObxReactObserver = true;
   const baseRender = proto.render;
-  proto.render = function () {
+  proto.render = function() {
     return makeComponentReactive.call(this, baseRender);
   };
   return componentClass;
@@ -93,32 +91,35 @@ function makeComponentReactive(this: any, render: any) {
   const initialName =
     this.displayName ||
     this.name ||
-    (this.constructor &&
-      (this.constructor.displayName || this.constructor.name)) ||
-    "<component>";
+    (this.constructor && (this.constructor.displayName || this.constructor.name)) ||
+    '<component>';
 
-  const rootNodeID = this._reactInternalFiber && this._reactInternalFiber._debugID || '*';
+  const rootNodeID = (this._reactInternalFiber && this._reactInternalFiber._debugID) || '*';
 
   // wire up reactive render
   const baseRender = render.bind(this);
   let isRenderingPending = false;
-  const reaction = new Reaction(`${initialName}#${rootNodeID}.render()`, () => {
-    if (!isRenderingPending) {
-      isRenderingPending = true;
-      if (typeof this.componentWillReact === 'function') {
-        this.componentWillReact();
-      }
-      if (this[SYMBOL_ISUNMOUNTED] !== true) {
-        let hasError = true;
-        try {
-          Component.prototype.forceUpdate.call(this);
-          hasError = false;
-        } finally {
-          if (hasError) reaction.sleep();
+  const reaction = new Reaction(
+    `${initialName}#${rootNodeID}.render()`,
+    () => {
+      if (!isRenderingPending) {
+        isRenderingPending = true;
+        if (typeof this.componentWillReact === 'function') {
+          this.componentWillReact();
+        }
+        if (this[SYMBOL_ISUNMOUNTED] !== true) {
+          let hasError = true;
+          try {
+            Component.prototype.forceUpdate.call(this);
+            hasError = false;
+          } finally {
+            if (hasError) reaction.sleep();
+          }
         }
       }
-    }
-  }, this.$level || 0);
+    },
+    this.$level || 0,
+  );
 
   (reactiveRender as any)[SYMBOL_REACTION] = reaction;
   this.render = reactiveRender;

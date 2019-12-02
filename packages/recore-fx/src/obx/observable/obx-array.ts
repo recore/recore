@@ -49,10 +49,7 @@ export default class ObxArray extends Obx<any[]> {
 const arrayProto = Array.prototype;
 const arrayMethods = Object.create(arrayProto);
 
-[
-  'push', 'pop', 'shift', 'unshift',
-  'splice', 'sort', 'reverse',
-].forEach((method) => {
+['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse'].forEach(method => {
   const original = (arrayProto as any)[method];
   addHiddenProp(arrayMethods, method, function mutator(this: any[], ...args: any[]) {
     const obx = getObx(this) as ObxArray;
@@ -73,7 +70,8 @@ const arrayMethods = Object.create(arrayProto);
         inserted = args.slice(2);
         changed = inserted.length > 0 || this.length !== length;
         break;
-      case 'pop': case 'shift':
+      case 'pop':
+      case 'shift':
         changed = this.length !== length;
         break;
     }
@@ -101,7 +99,7 @@ const arrayProxyTraps: ProxyHandler<any[]> = {
     if (name === SYMBOL_RAW) {
       return rawTarget;
     }
-    if (name === SYMBOL_OBX || name === SYMBOL_PROXY || (name in arrayMethods)) {
+    if (name === SYMBOL_OBX || name === SYMBOL_PROXY || name in arrayMethods) {
       return (rawTarget as any)[name];
     }
 
@@ -121,7 +119,7 @@ const arrayProxyTraps: ProxyHandler<any[]> = {
       rawTarget[name] = value;
       return true;
     }
-    if (name === SYMBOL_OBX || name === SYMBOL_PROXY || (name in arrayMethods)) {
+    if (name === SYMBOL_OBX || name === SYMBOL_PROXY || name in arrayMethods) {
       return false;
     }
 
@@ -136,7 +134,7 @@ const arrayProxyTraps: ProxyHandler<any[]> = {
     return true;
   },
   deleteProperty(rawTarget, name: PropertyKey) {
-    if (name === SYMBOL_OBX || name === SYMBOL_PROXY || (name in arrayMethods)) {
+    if (name === SYMBOL_OBX || name === SYMBOL_PROXY || name in arrayMethods) {
       return false;
     }
 

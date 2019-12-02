@@ -1,8 +1,4 @@
-import {
-  walk,
-  addHiddenFinalProp,
-  nextId,
-} from '../utils';
+import { walk, addHiddenFinalProp, nextId } from '../utils';
 import { defineObxProperty } from './obx-property';
 import { IObservable, propagateChanged, startBatch, endBatch } from './observable';
 import { IDerivation, DerivationState, clearObserving } from '../derivation';
@@ -24,9 +20,7 @@ class Obx<T = any[] | object> implements IObservable, IDerivation {
   dependenciesState = DerivationState.NOT_TRACKING;
   lowestObserverState = DerivationState.UP_TO_DATE;
 
-  constructor(public name: string, public target: T, public obxFlag: ObxFlag = ObxFlag.DEEP) {
-
-  }
+  constructor(public name: string, public target: T, public obxFlag: ObxFlag = ObxFlag.DEEP) {}
 
   onBecomeDirty() {
     propagateChanged(this);
@@ -87,7 +81,7 @@ class Obx<T = any[] | object> implements IObservable, IDerivation {
       return false;
     }
 
-    return (key in this.target);
+    return key in this.target;
   }
 
   get(key?: PropertyKey): any {
@@ -100,12 +94,7 @@ class Obx<T = any[] | object> implements IObservable, IDerivation {
 
   set(key: PropertyKey, val: any): void {
     if (this.obxFlag > ObxFlag.REF) {
-      defineObxProperty(
-        this.target as any, key,
-        val,
-        undefined,
-        this.obxFlag,
-      );
+      defineObxProperty(this.target as any, key, val, undefined, this.obxFlag);
     } else {
       (this.target as any)[key] = val;
     }

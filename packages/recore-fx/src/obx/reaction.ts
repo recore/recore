@@ -24,12 +24,7 @@ export class Reaction implements IDerivation {
   private sleeping = false;
   private running = false;
 
-  constructor(
-    public name: string,
-    private check: () => void,
-    public level: number = 0,
-    throttleWait: number = 10
-  ) {
+  constructor(public name: string, private check: () => void, public level: number = 0, throttleWait: number = 10) {
     if (throttleWait > 0) {
       this.run = throttle(this.runReaction.bind(this), throttleWait);
     } else {
@@ -169,7 +164,7 @@ function flushReactions() {
       // tslint:disable-next-line
       console.error(
         `Reaction doesn't converge to a stable state after ${MAX_REACTION_ITERATIONS} iterations.` +
-        ` Probably there is a cycle in the reactive function: ${allReactions[0]}`
+          ` Probably there is a cycle in the reactive function: ${allReactions[0]}`,
       );
       break;
     }
@@ -217,11 +212,16 @@ export function autorun(action: Action, options: number | true | AutorunOptions 
   } else if (options === true) {
     options = { sync: true };
   }
-  const name: string = options.name || (action as any).name || "Autorun@" + nextId();
+  const name: string = options.name || (action as any).name || 'Autorun@' + nextId();
 
-  const reaction = new Reaction(name, function (this: Reaction) {
-    this.track(reactionRunner);
-  }, options.level || 0, options.throttle || 0);
+  const reaction = new Reaction(
+    name,
+    function(this: Reaction) {
+      this.track(reactionRunner);
+    },
+    options.level || 0,
+    options.throttle || 0,
+  );
 
   const dispose = () => {
     reaction.sleep();
@@ -234,7 +234,7 @@ export function autorun(action: Action, options: number | true | AutorunOptions 
     const ctx: RunContext = {
       firstRun,
       dispose,
-    }
+    };
     action.call(ctx, ctx);
     firstRun = false;
   }

@@ -1,6 +1,6 @@
 import { createElement, Component } from 'react';
 import classNames from 'classnames';
-import { Location, LocationDescriptor } from 'history';
+import { Location, LocationDescriptor } from '@recore/history';
 import navigator from '../navigator';
 import Route from './route';
 import Link from './link';
@@ -29,12 +29,7 @@ class NavLink extends Component<NavLinkProps> {
   };
 
   render() {
-    const {
-      to, exact, strict, isActive,
-      className, style,
-      activeClassName, activeStyle,
-      ...rest
-    } = this.props;
+    const { to, exact, strict, isActive, className, style, activeClassName, activeStyle, ...rest } = this.props;
     const path = typeof to === 'object' ? to.pathname : to;
     const { location } = navigator.history!;
 
@@ -51,7 +46,7 @@ class NavLink extends Component<NavLinkProps> {
           style: actived ? { ...style, ...activeStyle } : style,
           ...rest,
         });
-      }
+      },
     });
   }
 }

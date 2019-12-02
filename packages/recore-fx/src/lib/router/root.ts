@@ -17,9 +17,7 @@ export default class Root extends Component<RootProps> {
 
     const history = navigator.history!;
     this.location = history.location;
-    this.rootContext = new RouteContext(
-      new MatchResult('/', '/', this.location.pathname === '/')
-    );
+    this.rootContext = new RouteContext(new MatchResult('/', '/', this.location.pathname === '/'));
     this.dispose = history.listen(() => {
       const { location } = history;
       if (!locationIs(this.location, location)) {
@@ -42,8 +40,12 @@ export default class Root extends Component<RootProps> {
     const { children } = this.props;
     const { location, match } = this.rootContext;
 
-    return createElement(RouteContext.Provider, {
-      value: this.rootContext,
-    }, children({ match, location, defined : {} }));
+    return createElement(
+      RouteContext.Provider,
+      {
+        value: this.rootContext,
+      },
+      children({ match, location, defined: {} }),
+    );
   }
 }

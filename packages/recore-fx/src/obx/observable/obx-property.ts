@@ -10,7 +10,15 @@ import {
   clearObserving,
   setDerivationDirty,
 } from '../derivation';
-import { IObservable, reportObserved, startBatch, endBatch, propagateChangeConfirmed, propagateMaybeChanged, reportPropValue } from './observable';
+import {
+  IObservable,
+  reportObserved,
+  startBatch,
+  endBatch,
+  propagateChangeConfirmed,
+  propagateMaybeChanged,
+  reportPropValue,
+} from './observable';
 import { nextId } from '../utils';
 import { ObxFlag, SYMBOL_OBX, getObx } from './obx';
 import { getProxiedValue } from './proxy';
@@ -32,6 +40,8 @@ export function asNewValue(obj: object) {
   return obj;
 }
 
+const DIRTY = Symbol('dirty');
+
 export default class ObxProperty implements IObservable, IDerivation {
   id = nextId();
   observing: IObservable[] = [];
@@ -52,7 +62,7 @@ export default class ObxProperty implements IObservable, IDerivation {
     private setter?: (v: any) => void,
     private value?: any,
     private obxFlag: ObxFlag = ObxFlag.DEEP,
-  ) { }
+  ) {}
 
   onBecomeDirty() {
     propagateMaybeChanged(this);
@@ -74,7 +84,7 @@ export default class ObxProperty implements IObservable, IDerivation {
       this.pending = false;
       const oldValue = this.value;
       this.value = this.pendingValue;
-      if (!this.is(this.value, oldValue)) {
+      if (!this.is(oldValue, this.value)) {
         propagateChangeConfirmed(this);
         this.objectVer = getVer(this.value);
       }
@@ -82,7 +92,7 @@ export default class ObxProperty implements IObservable, IDerivation {
   }
 
   private is(oldValue: any, value: any) {
-    return is(oldValue, value) && (isPrimitive (value) || (getVer(value) === this.objectVer));
+    return oldValue !== DIRTY && is(oldValue, value) && (isPrimitive(value) || getVer(value) === this.objectVer);
   }
 
   get() {
@@ -103,15 +113,9 @@ export default class ObxProperty implements IObservable, IDerivation {
   }
 
   set(value: any) {
-    invariant(
-      !this.isRunningSetter,
-      `The setter of observable value '${this.name}' is trying to update itself.`
-    );
+    invariant(!this.isRunningSetter, `The setter of observable value '${this.name}' is trying to update itself.`);
 
-    invariant(
-      Boolean(this.setter || !this.getter),
-      `Cannot assign a new value to readonly value '${this.name}'.`
-    );
+    invariant(Boolean(this.setter || !this.getter), `Cannot assign a new value to readonly value '${this.name}'.`);
 
     const oldValue = this.pending ? this.pendingValue : this.value;
 
@@ -129,6 +133,7 @@ export default class ObxProperty implements IObservable, IDerivation {
       this.isRunningSetter = true;
       const prevTracking = untrackedStart();
       try {
+        this.value = DIRTY;
         this.setter!.call(this.scope, value);
       } finally {
         untrackedEnd(prevTracking);
@@ -145,7 +150,7 @@ export default class ObxProperty implements IObservable, IDerivation {
     this.value = runDerivedFunction(this, this.getter!, this.scope);
     globalState.computationDepth--;
     this.isComputing = false;
-    return (isCaughtException(oldValue) || isCaughtException(this.value) || !this.is(this.value, oldValue));
+    return isCaughtException(oldValue) || isCaughtException(this.value) || !this.is(oldValue, this.value);
   }
 }
 
@@ -165,9 +170,11 @@ export function ensureObxProperty(obj: any, prop: PropertyKey, obxFlag: ObxFlag 
 }
 
 export function defineObxProperty(
-  obj: object, key: PropertyKey, val: any,
+  obj: object,
+  key: PropertyKey,
+  val: any,
   descriptor?: PropertyDescriptor,
-  obxFlag: ObxFlag = ObxFlag.DEEP
+  obxFlag: ObxFlag = ObxFlag.DEEP,
 ): void {
   if (!descriptor) {
     descriptor = Object.getOwnPropertyDescriptor(obj, key);
@@ -190,10 +197,9 @@ export function defineObxProperty(
     enumerable: true,
     configurable: true,
     get,
-    set: (newVal) => property.set(newVal),
+    set: newVal => property.set(newVal),
   });
 }
-
 
 export function getObxProperty(obj: object, key: PropertyKey) {
   const descriptor = Object.getOwnPropertyDescriptor(obj, key);

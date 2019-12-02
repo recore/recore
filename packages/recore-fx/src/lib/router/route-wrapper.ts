@@ -64,19 +64,22 @@ class RouteWrapper extends Component<RouteWrapperProps, RouteWrapperState> {
       } else if (isRedirect(ret)) {
         history.replace(String(ret));
       } else if (ret && ret.then) {
-        ret.then((res: any) => {
-          if (isRedirect(res)) {
-            history.replace(String(ret));
-            return;
-          }
-          this.setState({ authPassed: AuthStatus.pass });
-        }, (res: any) => {
-          if (isRedirect(res)) {
-            history.replace(String(ret));
-            return;
-          }
-          this.setState({ authPassed: AuthStatus.fail });
-        });
+        ret.then(
+          (res: any) => {
+            if (isRedirect(res)) {
+              history.replace(String(ret));
+              return;
+            }
+            this.setState({ authPassed: AuthStatus.pass });
+          },
+          (res: any) => {
+            if (isRedirect(res)) {
+              history.replace(String(ret));
+              return;
+            }
+            this.setState({ authPassed: AuthStatus.fail });
+          },
+        );
       }
     } else {
       this.setState({ authPassed: AuthStatus.pass });

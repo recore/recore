@@ -1,35 +1,45 @@
 import classNames from 'classnames';
 import { ReactType, ReactNode } from 'react';
-import {
-  isPlainObject,
-  hasOwnProperty,
-  looseEqual,
-  looseIndexOf,
-  shallowEqual,
-} from '../utils';
+import { isPlainObject, hasOwnProperty, looseEqual, looseIndexOf, shallowEqual } from '../utils';
 import { cloneDeep } from '../utils/clone-deep';
 import { shouldCompute, untracked } from '../obx/derivation';
-import { $set } from '../obx/utils';
+import { $set, $get } from '../obx/utils';
 import { defineObxProperty } from '../obx/observable/obx-property';
 import { ObxFlag, getObx } from '../obx/observable/obx';
 import Area from './area';
+
+const PROP_GS = Symbol.for('prop-gs');
 
 export default class View {
   private computedProps: { [key: string]: any } = {};
   private xmodelAssign?: {
     (v: any): void;
     prop: string;
-  }
+  };
+
+  $ref: any = null;
 
   constructor(
     area: Area,
     id: string,
     component: ReactType,
     getProps?: (scope: object, area: Area) => any[],
-    getSlots?: (area: Area) => { [slot: string]: ReactNode }
+    getSlots?: (area: Area) => { [slot: string]: ReactNode },
   ) {
+    defineObxProperty(this, '$ref', null, {}, ObxFlag.REF);
     const scope = area.scope;
-    scope._views[id] = this;
+    if (id) {
+      scope._views[id] = this;
+      if (scope.$top !== scope) {
+        if (!scope.$top._views[id]) {
+          scope.$top._views[id] = area.path;
+        } else if (process.env.NODE_ENV === 'development') {
+          if (scope.$top._views[id] !== area.path) {
+            console.warn(`Duplicated view id "${id}"`);
+          }
+        }
+      }
+    }
 
     const refresh = () => {
       const obx = getObx(this._props);
@@ -44,7 +54,7 @@ export default class View {
         refresh();
         return ret;
       };
-    }
+    };
 
     const processXmodel = (xmodel: [() => any, (v: any) => void], maps: any, events: any) => {
       this.xmodelAssign = undefined;
@@ -52,7 +62,7 @@ export default class View {
         return;
       }
 
-      const [ getter, setter ] = xmodel;
+      const [getter, setter] = xmodel;
       if (!getter || !setter) {
         return;
       }
@@ -60,9 +70,10 @@ export default class View {
         return assign(setter, getter, data);
       });
       const data = getter();
-      const useChecked = component === 'input'
-        ? (maps.type === 'radio' || maps.type === 'checkbox')
-        : (component as any).propTypes && (component as any).propTypes.checked;
+      const useChecked =
+        component === 'input'
+          ? maps.type === 'radio' || maps.type === 'checkbox'
+          : (component as any).propTypes && (component as any).propTypes.checked;
       if (useChecked) {
         // FIXME: checked xmodelAssign
         // this.xmodelAssign!.prop = 'checked';
@@ -80,43 +91,45 @@ export default class View {
         this.xmodelAssign!.prop = 'value';
         maps.value = data;
       }
-    }
+    };
+
+    const addAPI = (ref: any) => {
+      if (ref && (!ref.prop || !ref.prop[PROP_GS])) {
+        try {
+          ref.prop = this.prop.bind(this);
+          (ref.prop as any)[PROP_GS] = true;
+          ref.get = this.get.bind(this);
+          ref.set = this.set.bind(this);
+        } catch (e) {
+          // warning
+        }
+      }
+    };
 
     const processRef = (maps: any) => {
-      if (maps.ref) {
-        if (typeof maps.ref === 'string') {
-          const refKey = maps.ref;
-          maps.ref = (ref: any) => {
-            $set(scope, `$refs/${refKey}`, ref);
-          };
-        }
-        if (id) {
-          const originRef = maps.ref;
-          maps.ref = (ref: any) => {
-            if (ref && !ref.props) {
-              Object.defineProperty(ref, 'props', {
-                configurable: false,
-                enumerable: true,
-                get: () => this.props,
-              });
-            }
-            scope._views[id] = ref || this;
-            originRef(ref);
-          };
-        }
-      } else if (id) {
-        maps.ref = (ref: any) => {
-          if (ref && !ref.props) {
-            Object.defineProperty(ref, 'props', {
-              configurable: false,
-              enumerable: true,
-              get: () => this.props,
-            });
-          }
-          scope._views[id] = ref || this;
+      let originRef = maps.ref;
+      if (typeof originRef === 'string') {
+        const refKey = originRef;
+        originRef = (ref: any) => {
+          $set(scope, `$refs/${refKey}`, ref);
         };
       }
-    }
+      maps.ref = (instance: any) => {
+        if (instance) {
+          addAPI(instance);
+        }
+        this.$ref = instance;
+        if (originRef) {
+          if (typeof originRef === 'function') {
+            originRef(instance);
+          } else {
+            try {
+              originRef.current = instance;
+            } catch (e) { }
+          }
+        }
+      };
+    };
 
     const processProps = (maps: any, propsArr: any[]) => {
       const klass: any[] = [];
@@ -154,42 +167,40 @@ export default class View {
       {
         get() {
           const maps: any = {};
-          if (getProps) {
-            processProps(maps, getProps(scope, area));
-          }
+          processProps(maps, getProps ? getProps(scope, area) : []);
           if (getSlots) {
             Object.assign(maps, getSlots(area));
           }
           return maps;
-        }
+        },
       },
-      ObxFlag.REF
+      ObxFlag.REF,
     );
     defineObxProperty(this, '_props', {}, {}, ObxFlag.VAL);
     defineObxProperty(this, '_setted', {}, {}, ObxFlag.VAL);
   }
 
   private computedKeys?: string[];
+  private settedKeys: string[] = [];
   private _props?: { [key: string]: any };
   private _setted: { [key: string]: any } = {};
   get props() {
     const keys = Object.keys(this.computedProps);
-    if (this._props && shallowEqual(this.computedKeys, keys)) {
+    const settedKeys = Object.keys(this._setted);
+    if (this._props && shallowEqual(this.computedKeys, keys) && shallowEqual(this.settedKeys, settedKeys)) {
       return this._props;
     }
 
+    this.settedKeys = settedKeys;
     this.computedKeys = keys;
-    // TODO: when set a new key, recover from _props, may be mark as added
     const props = {};
 
-    keys.forEach(key => {
+    unionArray(keys, settedKeys).forEach(key => {
       Object.defineProperty(props, key, {
         configurable: false,
         enumerable: true,
         get: () => {
-          return this._setted[key] !== undefined
-            ? this._setted[key]
-            : this.computedProps[key];
+          return this._setted[key] !== undefined ? this._setted[key] : this.computedProps[key];
         },
         set: val => {
           if (this.xmodelAssign && this.xmodelAssign.prop === key) {
@@ -197,12 +208,36 @@ export default class View {
           } else {
             this._setted[key] = val;
           }
-        }
+        },
       });
     });
     this._props = props;
     return this._props;
   }
+
+  get(key: string): any {
+    return $get(this.props, key);
+  }
+
+  set(key: string, val: any) {
+    if (hasOwnProperty(this._props, key)) {
+      this._props![key] = val;
+    } else {
+      $set(this._setted, key, val);
+    }
+  }
+
+  prop(key: string, val?: any): any {
+    if (val === undefined) {
+      return this.get(key);
+    } else {
+      this.set(key, val);
+    }
+  }
+}
+
+function unionArray(arr1: any[], arr2: any[]) {
+  return Array.from(new Set(arr1.concat(arr2)));
 }
 
 function matchClassProperty(key: string): boolean | string {
@@ -287,7 +322,7 @@ function processData(
   klass: any[],
   events: EventsMap,
   rest: { [k: string]: any },
-  listen: (v: any) => any
+  listen: (v: any) => any,
 ) {
   const m = matchClassProperty(key);
   if (m) {
@@ -324,7 +359,6 @@ function processData(
 
   rest[key] = isFn ? listen(value) : value;
 }
-
 
 function isNativeEvent(e: any) {
   if (e && e.nativeEvent && e.target) {
@@ -366,8 +400,7 @@ function assign(setter: (v: any) => void, getter: () => any, data: any) {
       setter(target.value);
     }
   } else if (target.nodeName === 'SELECT') {
-    const data = Array.prototype.filter.call(target.options, (o: any) => o.selected)
-      .map((o: any) => o.value);
+    const data = Array.prototype.filter.call(target.options, (o: any) => o.selected).map((o: any) => o.value);
     setter(target.multiple ? data : data[0]);
   } else {
     setter(target.value);

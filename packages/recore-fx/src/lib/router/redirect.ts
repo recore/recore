@@ -1,5 +1,5 @@
 import { Component } from 'react';
-import { LocationDescriptor } from 'history';
+import { LocationDescriptor } from '@recore/history';
 import navigator from '../navigator';
 import { generatePath, MatchResult } from './utils';
 
@@ -15,7 +15,7 @@ export interface RedirectProps {
  */
 class Redirect extends Component<RedirectProps> {
   static defaultProps = {
-    push: false
+    push: false,
   };
 
   componentDidMount() {
@@ -29,7 +29,7 @@ class Redirect extends Component<RedirectProps> {
       } else {
         return {
           ...to,
-          pathname: generatePath(to.pathname, computedMatch.params)
+          pathname: generatePath(to.pathname, computedMatch.params),
         };
       }
     }
