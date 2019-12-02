@@ -1,7 +1,6 @@
 /node_modules/
 /packages/**/node_modules
-/packages/**/*.js
-/packages/**/*.d.ts
+/packages/**/*.json
 !/packages/*/src/**/*.js
 !/packages/*/src/**/*.d.ts
 /coverage/
