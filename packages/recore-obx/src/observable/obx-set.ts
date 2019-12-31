@@ -1,10 +1,8 @@
-import { setPrototypeOf } from '@recore/utils/set-prototype-of';
-
 import { addHiddenProp } from '../utils';
-
 import Obx, { getObx, ObxFlag } from './obx';
 import { reportChildValue } from './observable';
 import { getProxiedValue } from './proxy';
+import { setPrototypeOf } from '@recore/utils';
 
 type SetType = Set<any> | WeakSet<any>;
 
@@ -19,26 +17,21 @@ export default class ObxSet extends Obx<SetType> {
     return false;
   }
 
-  set(key: PropertyKey, val: any) {
-
-  }
+  set(key: PropertyKey, val: any) {}
 
   get(key: PropertyKey) {
     return undefined;
   }
 
-  del(key: PropertyKey) {
-
-  }
+  del(key: PropertyKey) {}
 }
-
 
 function isIterator(v: any): v is Iterator<any> {
   return v.next ? true : false;
 }
 
 export function patchAccessor(keys: Array<string | symbol>, proto: any, methods: object): void {
-  keys.forEach((method) => {
+  keys.forEach(method => {
     const original = proto[method];
     addHiddenProp(methods, method, function accessor(this: any, ...args: any[]) {
       const obx = getObx(this);
@@ -97,12 +90,12 @@ function createResultProxy(entries: any, flag: ObxFlag, keys: any[] = ['value'])
         reportChildValue(v, flag);
       }
       return getProxiedValue(v);
-    }
+    },
   });
 }
 
 export function patchMutator(keys: Array<string | symbol>, proto: any, methods: object): void {
-  keys.forEach((method) => {
+  keys.forEach(method => {
     const original = proto[method];
     addHiddenProp(methods, method, function mutator(this: any, ...args: any[]) {
       const size = this.size;
@@ -110,7 +103,9 @@ export function patchMutator(keys: Array<string | symbol>, proto: any, methods: 
       const obx = getObx(this);
       let changed = true;
       switch (method) {
-        case 'add': case 'clear': case 'delete':
+        case 'add':
+        case 'clear':
+        case 'delete':
           changed = this.size !== size;
           break;
       }

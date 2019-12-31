@@ -1,13 +1,11 @@
-import { hasOwnProperty } from '@recore/utils/has-own-property';
-
 import { walk } from '../utils';
-
 import { supportProxy, createProxy, getProxiedValue, SYMBOL_PROXY, SYMBOL_RAW } from './proxy';
 import Obx, { getObx, SYMBOL_OBX, ObxFlag } from './obx';
 import { defineObxProperty, ensureObxProperty } from './obx-property';
+import { hasOwnProperty } from '@recore/utils';
 
 function propFlag(flag: ObxFlag) {
-  return flag === ObxFlag.DEEP ? ObxFlag.DEEP : (flag - 1);
+  return flag === ObxFlag.DEEP ? ObxFlag.DEEP : flag - 1;
 }
 
 export default class ObxObject extends Obx<object> {
@@ -18,10 +16,7 @@ export default class ObxObject extends Obx<object> {
       this.target = createProxy(target, objectProxyTraps);
     } else if (obxFlag > ObxFlag.REF) {
       walk(target as any, (obj, key, val) => {
-        defineObxProperty(
-          obj, key, val, undefined,
-          propFlag(obxFlag),
-        );
+        defineObxProperty(obj, key, val, undefined, propFlag(obxFlag));
       });
     }
   }
@@ -37,7 +32,6 @@ export default class ObxObject extends Obx<object> {
   }
 }
 
-
 const objectProto = Object.prototype;
 
 const objectProxyTraps: ProxyHandler<any> = {
@@ -51,24 +45,21 @@ const objectProxyTraps: ProxyHandler<any> = {
     if (name === SYMBOL_RAW) {
       return rawTarget;
     }
-    if (name === SYMBOL_OBX || name === SYMBOL_PROXY || (name in objectProto)) {
+    if (name === SYMBOL_OBX || name === SYMBOL_PROXY || name in objectProto) {
       return rawTarget[name];
     }
 
     if (hasOwnProperty(rawTarget, name)) {
       const obx = getObx(rawTarget);
       if (obx) {
-        ensureObxProperty(
-          rawTarget, name,
-          propFlag(obx.obxFlag),
-        );
+        ensureObxProperty(rawTarget, name, propFlag(obx.obxFlag));
       }
     }
 
     return getProxiedValue(rawTarget[name]);
   },
   set(rawTarget, name: PropertyKey, value: any) {
-    if (name === SYMBOL_OBX || name === SYMBOL_PROXY || (name in objectProto)) {
+    if (name === SYMBOL_OBX || name === SYMBOL_PROXY || name in objectProto) {
       return false;
     }
 
@@ -100,4 +91,3 @@ const objectProxyTraps: ProxyHandler<any> = {
     return false;
   },
 };
-

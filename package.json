@@ -11,6 +11,7 @@
   "scripts": {
     "reinstall": "./scripts/reinstall.sh",
     "bootstrap": "lerna bootstrap",
+    "watch": "lerna run watch --parallel",
     "clean": "lerna run clean",
     "build": "lerna run build",
     "publish": "npm run build && lerna publish from-package"
@@ -23,6 +24,13 @@
   "devDependencies": {
     "@babel/types": "^7.5.5",
     "@types/node": "^12.6.9",
+    "@typescript-eslint/eslint-plugin": "^2.14.0",
+    "@typescript-eslint/eslint-plugin-tslint": "^2.14.0",
+    "@typescript-eslint/parser": "^2.14.0",
+    "eslint": "^6.0.0",
+    "eslint-config-prettier": "^6.9.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "prettier": "^1.19.1",
     "tslint": "^5.18.0",
     "typescript": "^3.5.3"
   }

@@ -1,8 +1,7 @@
 export function setPrototypeOf(target: any, proto: any) {
-  // @ts-ignore
+  // tslint:disable-next-line
   if (typeof Object.setPrototypeOf !== 'undefined') {
-    // @ts-ignore
-    Object.setPrototypeOf(target, proto);
+    Object.setPrototypeOf(target, proto); // tslint:disable-line
   } else {
     target.__proto__ = proto;
   }

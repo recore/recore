@@ -1,7 +1,8 @@
 import { globalState } from './global-state';
-import { hasObx, injectObx, getObx } from './observable/obx';
-import ObxInstance from './observable/obx-instance';
+import { hasObx, getObx } from './observable/obx';
 import { startBatch, endBatch } from './observable/observable';
+import { isUnInitializedDecoratorTarget, initializeDecoratorTarget } from './decorators';
+import { splitPath } from '@recore/utils';
 
 export function nextId() {
   return (++globalState.guid).toString(36).toLocaleLowerCase();
@@ -32,66 +33,6 @@ export function addHiddenFinalProp(object: any, propName: string | symbol, value
   });
 }
 
-const RE_PATH = /^([^/]*)(?:\/(.*))?$/;
-const RE_PATH_REVERSE = /^(?:(.*)\/)?([^/]+)$/;
-export function splitPath(path: string, reverse: boolean = false) {
-  return reverse ? RE_PATH_REVERSE.exec(path) : RE_PATH.exec(path);
-}
-
-export interface DecoratorDescription {
-  prop: string;
-  descriptor?: PropertyDescriptor;
-  decoratorTarget: any;
-}
-
-export const SYMBOL_DECORATORS = Symbol('__obxDecorators');
-
-export interface DecoratorTarget {
-  [SYMBOL_DECORATORS]?: { [prop: string]: DecoratorDescription };
-}
-
-export function isDecoratorTarget(a: any): a is DecoratorTarget {
-  return a[SYMBOL_DECORATORS] ? true : false;
-}
-
-export function getObxDecorators(a: DecoratorTarget) {
-  return a[SYMBOL_DECORATORS];
-}
-
-const descriptorCache: { [prop: string]: PropertyDescriptor } = {};
-
-export function createPropertyInitializerDescriptor(prop: string): PropertyDescriptor {
-  return (descriptorCache[prop] || (descriptorCache[prop] = {
-    configurable: true,
-    enumerable: false,
-    get() {
-      initializeInstance(this as DecoratorTarget);
-      // TODO not safe
-      return (this as any)[prop];
-    },
-    set(value) {
-      initializeInstance(this as DecoratorTarget);
-      // TODO not safe
-      (this as any)[prop] = value;
-    },
-  }));
-}
-
-export const SYMBOL_INITIALIZED = Symbol('__obxInitialized');
-
-export function initializeInstance(target: DecoratorTarget) {
-  if ((target as any)[SYMBOL_INITIALIZED] === true) {
-    return;
-  }
-  addHiddenProp(target, SYMBOL_INITIALIZED, true);
-
-  if (!hasObx(target)) {
-    const name = (target.constructor.name || 'ObservableObject') + '@' + nextId();
-    const obx = new ObxInstance(name, target);
-    injectObx(target, obx);
-  }
-}
-
 function formatNestValue(nestPath: string, val: any): any {
   if (!nestPath) {
     return val;
@@ -103,7 +44,7 @@ function formatNestValue(nestPath: string, val: any): any {
     return val;
   }
 
-  const [ _, path, key ] = pathArray;
+  const [_, path, key] = pathArray;
 
   return formatNestValue(path, key ? { [key]: val } : val);
 }
@@ -139,7 +80,7 @@ export function $has(target: any, path: PropertyKey): boolean {
     }
   }
 
-  return hasObx(ret) ? getObx(ret)!.has(entry) : (entry in ret);
+  return hasObx(ret) ? getObx(ret)!.has(entry) : entry in ret;
 }
 
 export function $get(target: any, path: PropertyKey): any {
@@ -163,6 +104,10 @@ export function $get(target: any, path: PropertyKey): any {
 
   if (!entry) {
     return $get(target, nestPath);
+  }
+
+  if (isUnInitializedDecoratorTarget(target)) {
+    initializeDecoratorTarget(target);
   }
 
   const ret = hasObx(target) ? getObx(target)!.get(entry) : target[entry];
@@ -198,6 +143,10 @@ export function $set(target: any, path: PropertyKey, val: any) {
       $set(target, nestPath, val);
     }
     return;
+  }
+
+  if (isUnInitializedDecoratorTarget(target)) {
+    initializeDecoratorTarget(target);
   }
 
   let v;
@@ -247,6 +196,10 @@ export function $del(target: any, path: PropertyKey) {
     }
   }
 
+  if (isUnInitializedDecoratorTarget(ret)) {
+    initializeDecoratorTarget(ret);
+  }
+
   if (hasObx(ret)) {
     getObx(ret)!.del(entry);
   } else {
@@ -259,5 +212,3 @@ export function $extend(target: any, properties: object) {
   walk(properties, (_, key, val) => $set(target, key, val));
   endBatch();
 }
-
-

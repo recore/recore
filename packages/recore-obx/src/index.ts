@@ -1,5 +1,3 @@
-import { isPlainObject } from '@recore/utils/is-plain-object';
-
 import { Reaction, autorun, clearReactions } from './reaction';
 import { nextTick, clearTicks } from './next-tick';
 import { $get, $set, $del, $extend } from './utils';
@@ -11,7 +9,8 @@ import { asObservable } from './observable/observable';
 import { globalState } from './global-state';
 import { getRawValue as $raw } from './observable/proxy';
 import { untracked } from './derivation';
-import { reportChange } from './observable/obx';
+import { reportChange, ObxFlag } from './observable/obx';
+import { isPlainObject } from '@recore/utils';
 import { asNewValue } from './observable/obx-property';
 
 export function resetObx() {
@@ -37,8 +36,5 @@ export function resetObx() {
 };
 
 // export api
-export { Reaction, reportChange, asNewValue, autorun, nextTick, untracked, $get, $set, $del, $extend, $raw };
+export { Reaction, reportChange, asNewValue, ObxFlag, autorun, nextTick, untracked, $get, $set, $del, $extend, $raw };
 export * from './decorators';
-export * from './observer';
-
-

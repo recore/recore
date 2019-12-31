@@ -1,14 +1,8 @@
-import { isObject } from '@recore/utils/is-object';
-
 import { nextId } from '../utils';
-import {
-  DerivationState,
-  IDerivation,
-  setDerivationDirty,
-} from '../derivation';
+import { DerivationState, IDerivation, setDerivationDirty } from '../derivation';
 import { globalState } from '../global-state';
-
 import Obx, { hasObx, getObx, injectObx, ObxFlag } from './obx';
+import { isObject } from '@recore/utils';
 
 export interface IDepTreeNode {
   id: string;
@@ -93,10 +87,7 @@ export function reportObserved(observable: IObservable): void {
   }
 }
 
-export function propagateChanged(
-  observable: IObservable,
-  force: boolean = false,
-) {
+export function propagateChanged(observable: IObservable, force: boolean = false) {
   if (observable.lowestObserverState === DerivationState.DIRTY && !force) {
     return;
   }
@@ -148,7 +139,7 @@ export function asObservable(thing: any, obxFlag: ObxFlag): Obx | undefined {
 
   const name = (thing.constructor.name || 'ObservableObject') + '@' + nextId();
   const ObxContructor = (asObservable as any).getObxContructor(thing);
-  const obx = ObxContructor ? new ObxContructor(name, thing, obxFlag) : null;
+  let obx = ObxContructor ? new ObxContructor(name, thing, obxFlag) : null;
 
   if (obx) {
     injectObx(thing, obx);
@@ -159,41 +150,30 @@ export function asObservable(thing: any, obxFlag: ObxFlag): Obx | undefined {
 (asObservable as any).getObxContructor = () => Obx;
 
 export function observeIterable(items: Iterable<any>, obxFlag: ObxFlag): void {
-   // @ts-ignore
-  for (const n of items) {
+  for (let n of items) {
     asObservable(n, obxFlag);
   }
 }
 
 export function reportPropValue(propValue: any, propFlag: ObxFlag): void {
-  if (propValue == null) {
-    return;
-  }
+  if (propValue == null) return;
 
-  const x =
-    propFlag > ObxFlag.REF
-      ? asObservable(propValue, propFlag)
-      : getObx(propValue);
+  const x = propFlag > ObxFlag.REF ? asObservable(propValue, propFlag) : getObx(propValue);
 
   if (x) {
-    reportObserved(x as any);
+    reportObserved(x);
   }
 }
 
 export function reportChildValue(propValue: any, ownerFlag: ObxFlag): void {
-  if (propValue == null) {
-    return;
-  }
+  if (propValue == null) return;
 
   const x =
     ownerFlag > ObxFlag.VAL
-      ? asObservable(
-          propValue,
-          ownerFlag === ObxFlag.DEEP ? ObxFlag.DEEP : ObxFlag.VAL,
-        )
+      ? asObservable(propValue, ownerFlag === ObxFlag.DEEP ? ObxFlag.DEEP : ObxFlag.VAL)
       : getObx(propValue);
 
   if (x) {
-    reportObserved(x as any);
+    reportObserved(x);
   }
 }

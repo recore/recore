@@ -71,9 +71,7 @@ export function shouldCompute(derivation: IDerivation): boolean {
   }
 }
 
-export function runDerivedFunction(
-  derivation: IDerivation, f: (...args: any[]) => any, context?: any, extraArguments?: any[]
-) {
+export function runDerivedFunction(derivation: IDerivation, f: (...args: any[]) => any, context?: any) {
   const prevTracking = globalState.trackingDerivation;
   // pre allocate array allocation + room for variation in deps
   derivation.newObserving = new Array(derivation.observing.length + 100);
@@ -82,9 +80,7 @@ export function runDerivedFunction(
   globalState.trackingDerivation = derivation;
   let result;
   try {
-    result = extraArguments
-      ? f.apply(context, [ context ].concat(extraArguments))
-      : f.call(context, context);
+    result = f.call(context);
   } catch (e) {
     result = new CaughtException(e);
   }

@@ -1,15 +1,17 @@
 {
   "packages": [
-    "packages/recore-fx"
+    "packages/*"
   ],
   "command": {
     "bootstrap": {
       "npmClientArgs": [
         "--no-package-lock"
-      ]
+      ],
+      "registry": "https://registry.npm.alibaba-inc.com/"
     },
     "publish": {
       "conventionalCommits": true,
+      "registry": "https://registry.npmjs.org/",
       "ignoreChanges": [
         "ignored-file",
         "*.md"

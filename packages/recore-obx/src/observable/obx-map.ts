@@ -1,6 +1,6 @@
-import { setPrototypeOf } from '@recore/utils/set-prototype-of';
 import Obx, { ObxFlag } from './obx';
 import { patchMutator, patchAccessor } from './obx-set';
+import { setPrototypeOf } from '@recore/utils';
 
 type MapType = Map<PropertyKey, any>;
 

@@ -7,7 +7,7 @@ export function cloneDeep(src: any): any {
   if (src === null || src === undefined) {
     data = src;
   } else if (Array.isArray(src)) {
-    data = src.map((item) => cloneDeep(item));
+    data = src.map(item => cloneDeep(item));
   } else if (type === 'object' && isPlainObject(src)) {
     data = {};
     for (const key in src) {

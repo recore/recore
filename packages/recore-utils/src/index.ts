@@ -9,3 +9,5 @@ export * from './loose-index-of';
 export * from './set-prototype-of';
 export * from './shallow-equal';
 export * from './throttle';
+export * from './split-path';
+export * from './clone-deep';

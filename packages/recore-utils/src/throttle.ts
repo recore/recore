@@ -1,7 +1,5 @@
-// @ts-ignore
 const useRAF = typeof requestAnimationFrame === 'function';
 
-// tslint:disable-next-line:ban-types
 export function throttle(func: Function, wait: number) {
   let lastArgs: any;
   let lastThis: any;
@@ -21,13 +19,10 @@ export function throttle(func: Function, wait: number) {
     return result;
   }
 
-  // tslint:disable-next-line:no-shadowed-variable
   function startTimer(pendingFunc: any, wait: number): number {
     if (useRAF) {
-      // @ts-ignore
       return requestAnimationFrame(pendingFunc);
     }
-    // @ts-ignore
     return setTimeout(pendingFunc, wait) as any;
   }
 
@@ -42,8 +37,7 @@ export function throttle(func: Function, wait: number) {
     const timeSinceLastInvoked = time - lastInvoked;
 
     return (
-      lastCalled === undefined || (timeSinceLastCalled >= wait)
-      || (timeSinceLastCalled < 0) || timeSinceLastInvoked >= wait
+      lastCalled === undefined || timeSinceLastCalled >= wait || timeSinceLastCalled < 0 || timeSinceLastInvoked >= wait
     );
   }
 

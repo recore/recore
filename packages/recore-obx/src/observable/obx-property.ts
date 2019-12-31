@@ -1,7 +1,3 @@
-import { isPrimitive } from '@recore/utils/is-primitive';
-import { invariant } from '@recore/utils/invariant';
-import { hasOwnProperty } from '@recore/utils/has-own-property';
-
 import { globalState } from '../global-state';
 import {
   untrackedStart,
@@ -14,12 +10,22 @@ import {
   clearObserving,
   setDerivationDirty,
 } from '../derivation';
+import {
+  IObservable,
+  reportObserved,
+  startBatch,
+  endBatch,
+  propagateChangeConfirmed,
+  propagateMaybeChanged,
+  reportPropValue,
+} from './observable';
 import { nextId } from '../utils';
-
-import { IObservable, reportObserved, startBatch, endBatch, propagateChangeConfirmed, propagateMaybeChanged, reportPropValue } from './observable';
 import { ObxFlag, SYMBOL_OBX, getObx } from './obx';
 import { getProxiedValue } from './proxy';
 import { is } from './compare';
+import { isPrimitive } from '@recore/utils';
+import { invariant } from '@recore/utils';
+import { hasOwnProperty } from '@recore/utils';
 
 function getVer(obj: any): number {
   const obx = getObx(obj);
@@ -34,11 +40,12 @@ export function asNewValue(obj: object) {
   return obj;
 }
 
+const DIRTY = Symbol('dirty');
+
 export default class ObxProperty implements IObservable, IDerivation {
   id = nextId();
   observing: IObservable[] = [];
-  // @ts-ignore
-  observers = new Set();
+  observers = new Set<IDerivation>();
   dependenciesState = DerivationState.NOT_TRACKING;
   lowestObserverState = DerivationState.UP_TO_DATE;
 
@@ -54,12 +61,11 @@ export default class ObxProperty implements IObservable, IDerivation {
     private getter?: (...rest: any[]) => any,
     private setter?: (v: any) => void,
     private value?: any,
-    private extraGetterParams?: any[],
-    private obxFlag: ObxFlag = ObxFlag.DEEP
-  ) { }
+    private obxFlag: ObxFlag = ObxFlag.DEEP,
+  ) {}
 
   onBecomeDirty() {
-    propagateMaybeChanged(this as any);
+    propagateMaybeChanged(this);
   }
 
   onBecomeUnobserved() {
@@ -70,7 +76,7 @@ export default class ObxProperty implements IObservable, IDerivation {
     if (this.getter && shouldCompute(this)) {
       startBatch();
       if (this.computeValue()) {
-        propagateChangeConfirmed(this as any);
+        propagateChangeConfirmed(this);
         this.objectVer = getVer(this.value);
       }
       endBatch();
@@ -78,17 +84,21 @@ export default class ObxProperty implements IObservable, IDerivation {
       this.pending = false;
       const oldValue = this.value;
       this.value = this.pendingValue;
-      if (!this.is(this.value, oldValue)) {
-        propagateChangeConfirmed(this as any);
+      if (!this.is(oldValue, this.value)) {
+        propagateChangeConfirmed(this);
         this.objectVer = getVer(this.value);
       }
     }
   }
 
+  private is(oldValue: any, value: any) {
+    return oldValue !== DIRTY && is(oldValue, value) && (isPrimitive(value) || getVer(value) === this.objectVer);
+  }
+
   get() {
     invariant(!this.isComputing, `Cycle detected in computation ${this.name}`, this.getter);
 
-    reportObserved(this as any);
+    reportObserved(this);
 
     this.ifModified();
     const result = this.value!;
@@ -103,15 +113,9 @@ export default class ObxProperty implements IObservable, IDerivation {
   }
 
   set(value: any) {
-    invariant(
-      !this.isRunningSetter,
-      `The setter of observable value '${this.name}' is trying to update itself.`
-    );
+    invariant(!this.isRunningSetter, `The setter of observable value '${this.name}' is trying to update itself.`);
 
-    invariant(
-      Boolean(this.setter || !this.getter),
-      `Cannot assign a new value to readonly value '${this.name}'.`
-    );
+    invariant(Boolean(this.setter || !this.getter), `Cannot assign a new value to readonly value '${this.name}'.`);
 
     const oldValue = this.pending ? this.pendingValue : this.value;
 
@@ -123,12 +127,13 @@ export default class ObxProperty implements IObservable, IDerivation {
       this.pendingValue = value;
       if (!this.pending) {
         this.pending = true;
-        propagateMaybeChanged(this as any);
+        propagateMaybeChanged(this);
       }
     } else {
       this.isRunningSetter = true;
       const prevTracking = untrackedStart();
       try {
+        this.value = DIRTY;
         this.setter!.call(this.scope, value);
       } finally {
         untrackedEnd(prevTracking);
@@ -138,18 +143,14 @@ export default class ObxProperty implements IObservable, IDerivation {
     }
   }
 
-  private is(oldValue: any, value: any) {
-    return is(oldValue, value) && (isPrimitive(value) || (getVer(value) === this.objectVer));
-  }
-
   private computeValue(): boolean {
     const oldValue = this.value;
     this.isComputing = true;
     globalState.computationDepth++;
-    this.value = runDerivedFunction(this, this.getter!, this.scope, this.extraGetterParams);
+    this.value = runDerivedFunction(this, this.getter!, this.scope);
     globalState.computationDepth--;
     this.isComputing = false;
-    return (isCaughtException(oldValue) || isCaughtException(this.value) || !this.is(this.value, oldValue));
+    return isCaughtException(oldValue) || isCaughtException(this.value) || !this.is(oldValue, this.value);
   }
 }
 
@@ -169,9 +170,11 @@ export function ensureObxProperty(obj: any, prop: PropertyKey, obxFlag: ObxFlag 
 }
 
 export function defineObxProperty(
-  obj: object, key: PropertyKey, val: any,
+  obj: object,
+  key: PropertyKey,
+  val: any,
   descriptor?: PropertyDescriptor,
-  obxFlag: ObxFlag = ObxFlag.DEEP
+  obxFlag: ObxFlag = ObxFlag.DEEP,
 ): void {
   if (!descriptor) {
     descriptor = Object.getOwnPropertyDescriptor(obj, key);
@@ -186,7 +189,7 @@ export function defineObxProperty(
 
   const getter = descriptor && descriptor.get;
   const setter = descriptor && descriptor.set;
-  const property = new ObxProperty(String(key), obj, getter, setter, val, undefined, obxFlag);
+  const property = new ObxProperty(String(key), obj, getter, setter, val, obxFlag);
   const get = () => property.get();
   (get as any)[SYMBOL_OBX] = property;
 
@@ -194,7 +197,7 @@ export function defineObxProperty(
     enumerable: true,
     configurable: true,
     get,
-    set: (newVal) => property.set(newVal),
+    set: newVal => property.set(newVal),
   });
 }
 
