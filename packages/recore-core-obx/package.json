@@ -1,6 +1,6 @@
 {
   "name": "@recore/core-obx",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "lib/observer.js",
   "scripts": {
     "clean": "rm -f *.js && rm -f *.d.ts",
@@ -24,8 +24,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@recore/obx": "^1.0.1",
-    "@recore/utils": "^1.0.1",
+    "@recore/obx": "^1.0.2",
+    "@recore/utils": "^1.0.2",
     "react": "^16.7.0"
   },
   "devDependencies": {

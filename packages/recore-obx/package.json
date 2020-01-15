@@ -1,6 +1,6 @@
 {
   "name": "@recore/obx",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "scripts": {
     "clean": "rm -rf lib",
     "watch": "tsc -w",
@@ -21,7 +21,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@recore/utils": "^1.0.1",
+    "@recore/utils": "^1.0.2",
     "react": "^16.7.0"
   },
   "devDependencies": {
