@@ -3,7 +3,7 @@
   "version": "1.0.2",
   "main": "lib/index.js",
   "scripts": {
-    "clean": "rm -f *.js && rm -f *.d.ts",
+    "clean": "rm -rf lib",
     "watch": "tsc -w",
     "build": "npm run clean && tsc"
   },
@@ -25,5 +25,6 @@
   },
   "devDependencies": {
     "typescript": "^3.5.3"
-  }
+  },
+  "gitHead": "b9251c5e2d7bc424d7365081c265375837a10bdb"
 }
