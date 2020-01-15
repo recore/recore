@@ -8,9 +8,9 @@ export default function withRouter(Custom: any) {
     static displayName = `withRouter(${Custom.displayName || Custom.name})`;
     static WrappedComponent = Custom;
 
-    private dispose: null | (() => void) = null;
-    private asRoutePage: boolean = false;
-    private location: any;
+    dispose: null | (() => void) = null;
+    asRoutePage: boolean = false;
+    location: any;
 
     constructor(props: any) {
       super(props);

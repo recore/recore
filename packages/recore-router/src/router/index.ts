@@ -177,11 +177,12 @@ export function createRouter(config: RoutesConfig, pagesMap: any, hooks: Hooks, 
       : null;
   }
 
+  function ViewRender(controller: any) {
+    return controller.$root.render((area: any) => area.router('main'));
+  }
+  (ViewRender as any).compileVersion = 2;
+
   if (page) {
-    function ViewRender(controller: any) {
-      return controller.$root.render((area: any) => area.router('main'));
-    }
-    (ViewRender as any).compileVersion = 2;
     return compose(
       ViewRender as any,
       typeof page === 'object' ? page : undefined,

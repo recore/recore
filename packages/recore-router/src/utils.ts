@@ -5,7 +5,7 @@ import Route from './router/route';
 import Redirect from './router/redirect';
 import navigator, { HistoryOptions } from './navigator';
 import Root from './router/root';
-import { hasOwnProperty, isObject } from '@recore/utils';
+import { hasOwnProperty, isObject, fail } from '@recore/utils';
 
 export function xId(obj: any, defaultKey: any): string {
   return String((obj && obj.$id) || defaultKey);

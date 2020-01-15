@@ -150,7 +150,7 @@ export function asObservable(thing: any, obxFlag: ObxFlag): Obx | undefined {
 (asObservable as any).getObxContructor = () => Obx;
 
 export function observeIterable(items: Iterable<any>, obxFlag: ObxFlag): void {
-  for (let n of items) {
+  for (let n of items as any) {
     asObservable(n, obxFlag);
   }
 }
