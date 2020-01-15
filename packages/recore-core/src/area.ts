@@ -281,6 +281,7 @@ export default class Area {
       this.areas.forEach(item => {
         item.willSleep = true;
       });
+      this.areas = [];
       nextTick(() => {
         this.marked = false;
         this.dispose();
@@ -292,6 +293,7 @@ export default class Area {
       area = this.areasMap[id]!;
       if (area.scope.$each === data.$each) {
         area.willSleep = false;
+        this.areas.push(area);
         return area;
       }
     }
