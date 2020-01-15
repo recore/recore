@@ -1,18 +1,18 @@
 {
-  "name": "@recore/utils",
+  "name": "@recore/core",
   "version": "1.0.1",
   "main": "lib/index.js",
   "scripts": {
-    "clean": "rm -f *.js && rm -f *.d.ts",
+    "clean": "rm -rf lib",
     "watch": "tsc -w",
     "build": "npm run clean && tsc"
   },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/recore/recore.git",
-    "directory": "packages/recore-utils"
+    "directory": "packages/recore-core"
   },
-  "homepage": "http://github.com/recore/recore/packages/recore-utils",
+  "homepage": "http://github.com/recore/recore",
   "authors": [
     "onbing <me@yanbingbing.com> (https://github.com/yanbingbing)"
   ],
@@ -23,7 +23,16 @@
   "publishConfig": {
     "access": "public"
   },
+  "dependencies": {
+    "@recore/core-obx": "^1.0.1",
+    "@recore/obx": "^1.0.1",
+    "@recore/utils": "^1.0.1",
+    "classnames": "^2.2.6",
+    "react": "^16",
+    "react-dom": "^16"
+  },
   "devDependencies": {
+    "@types/react": "^16.9.17",
     "typescript": "^3.5.3"
   }
 }

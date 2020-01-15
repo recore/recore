@@ -1,5 +1,5 @@
 {
-  "name": "@recore/utils",
+  "name": "@recore/router",
   "version": "1.0.1",
   "main": "lib/index.js",
   "scripts": {
@@ -23,7 +23,17 @@
   "publishConfig": {
     "access": "public"
   },
+  "dependencies": {
+    "@recore/core": "^1.0.1",
+    "@recore/history": "^4.11.0",
+    "@recore/obx": "^1.0.1",
+    "@recore/utils": "^1.0.1",
+    "classnames": "^2.2.6",
+    "path-to-regexp": "^2.4.0",
+    "react": "^16.7.0"
+  },
   "devDependencies": {
-    "typescript": "^3.5.3"
+    "@types/react": "^16.7.20",
+    "typescript": "^3.7.4"
   }
 }
