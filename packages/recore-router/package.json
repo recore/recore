@@ -1,6 +1,6 @@
 {
   "name": "@recore/router",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "main": "lib/index.js",
   "scripts": {
     "clean": "rm -rf lib",
@@ -24,10 +24,10 @@
     "access": "public"
   },
   "dependencies": {
-    "@recore/core": "^1.0.2",
+    "@recore/core": "^1.0.3",
     "@recore/history": "^4.11.0",
-    "@recore/obx": "^1.0.2",
-    "@recore/utils": "^1.0.2",
+    "@recore/obx": "^1.0.3",
+    "@recore/utils": "^1.0.3",
     "classnames": "^2.2.6",
     "path-to-regexp": "^2.4.0",
     "react": "^16.7.0"
