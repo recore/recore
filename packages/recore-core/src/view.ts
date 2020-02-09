@@ -2,6 +2,7 @@ import classNames from 'classnames';
 import { ReactType, ReactNode } from 'react';
 import { isPlainObject, hasOwnProperty, looseEqual, looseIndexOf, shallowEqual, cloneDeep } from '@recore/utils';
 import { shouldCompute, untracked } from '@recore/obx/lib/derivation';
+import { autorun, Reaction } from '@recore/obx/lib/reaction';
 import { $set, $get } from '@recore/obx/lib/utils';
 import { defineObxProperty } from '@recore/obx/lib/observable/obx-property';
 import { ObxFlag, getObx } from '@recore/obx/lib/observable/obx';
@@ -15,6 +16,7 @@ export default class View {
     (v: any): void;
     prop: string;
   };
+  private shadowModel: any;
 
   $ref: any = null;
 
@@ -53,6 +55,64 @@ export default class View {
         refresh();
         return ret;
       };
+    };
+
+    class ShadowModel {
+      value: any;
+
+      constructor(getter: () => any) {
+        defineObxProperty(this, 'value', {}, {}, ObxFlag.DEEP);
+        // autorun(() => {
+        //   console.log('------ [autorun] shadowModel value changes to', getter());
+        //   this.value = getter && getter();
+        // }, true);
+        const reaction = new Reaction(
+          name,
+          () => {
+            // this.track(reactionRunner);
+            this.value = getter && getter();
+          },
+          0,
+          0,
+        );
+        reaction.runReaction();
+      }
+    }
+
+    const processXField = (getter: () => any, maps: any, events: any) => {
+      if (!this.shadowModel) {
+        this.shadowModel = new ShadowModel(getter);
+      }
+
+      // output
+      addToEvents(events, 'onChange', (data: any) => {
+        return assign((v) => {
+          console.log('------ [onChange] shadowModel value changes to', v);
+          this.shadowModel.value = v.value ? v.value : v;
+        }, () => this.shadowModel.value, data);
+      });
+      const data = this.shadowModel.value;
+
+      const useChecked =
+        component === 'input'
+          ? maps.type === 'radio' || maps.type === 'checkbox'
+          : (component as any).propTypes && (component as any).propTypes.checked;
+      // input
+      if (useChecked) {
+        // FIXME: checked xmodelAssign
+        // this.xmodelAssign!.prop = 'checked';
+        if (component === 'input' && maps.type === 'checkbox') {
+          if (Array.isArray(data)) {
+            maps.checked = looseIndexOf(data, maps.value) > -1;
+          } else {
+            maps.checked = looseEqual(data, true);
+          }
+        } else {
+          maps.checked = looseEqual(maps.value, data);
+        }
+      } else {
+        maps.value = data;
+      }
     };
 
     const processXmodel = (xmodel: [() => any, (v: any) => void], maps: any, events: any) => {
@@ -113,7 +173,11 @@ export default class View {
           $set(scope, `$refs/${refKey}`, ref);
         };
       }
-      maps.ref = (instance: any) => {
+      maps.ref = (inst: any) => {
+        let instance = inst;
+        if (inst && typeof inst.getInstance === 'function') {
+          instance = inst.getInstance();
+        }
         if (instance) {
           addAPI(instance);
         }
@@ -153,7 +217,11 @@ export default class View {
       }
       processRef(maps);
       if ('x-model' in maps) {
-        processXmodel(maps['x-model'], maps, events);
+        if (maps['x-model'].mediator) {
+          processXField(maps['x-model'].mediator[0], maps, events);
+        } else {
+          processXmodel(maps['x-model'], maps, events);
+        }
         delete maps['x-model'];
       }
       mergeEvents(maps, events, listen);
@@ -215,6 +283,9 @@ export default class View {
   }
 
   get(key: string): any {
+    if (this.shadowModel && key === 'value') {
+      return this.shadowModel.value;
+    }
     return $get(this.props, key);
   }
 

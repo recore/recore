@@ -14,7 +14,7 @@
     "watch": "lerna run watch --parallel",
     "clean": "lerna run clean",
     "build": "lerna run build",
-    "publish": "npm run build && lerna publish from-package"
+    "release": "npm run build && lerna publish"
   },
   "repository": {
     "type": "git",
