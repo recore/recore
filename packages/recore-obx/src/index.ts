@@ -19,7 +19,7 @@ export function resetObx() {
   globalState.reset();
 }
 
-(asObservable as any).getObxContructor = (thing: object) => {
+(asObservable as any).getObxConstructor = (thing: object) => {
   if (Array.isArray(thing)) {
     return ObxArray;
   }

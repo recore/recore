@@ -137,9 +137,9 @@ export function asObservable(thing: any, obxFlag: ObxFlag): Obx | undefined {
     return;
   }
 
-  const name = (thing.constructor.name || 'ObservableObject') + '@' + nextId();
-  const ObxContructor = (asObservable as any).getObxContructor(thing);
-  let obx = ObxContructor ? new ObxContructor(name, thing, obxFlag) : null;
+  const name = (thing.constructor && thing.constructor.name || 'ObservableObject') + '@' + nextId();
+  const ObxConstructor = (asObservable as any).getObxConstructor(thing);
+  let obx = ObxConstructor ? new ObxConstructor(name, thing, obxFlag) : null;
 
   if (obx) {
     injectObx(thing, obx);
@@ -147,7 +147,7 @@ export function asObservable(thing: any, obxFlag: ObxFlag): Obx | undefined {
   }
 }
 
-(asObservable as any).getObxContructor = () => Obx;
+(asObservable as any).getObxConstructor = () => Obx;
 
 export function observeIterable(items: Iterable<any>, obxFlag: ObxFlag): void {
   for (let n of items as any) {

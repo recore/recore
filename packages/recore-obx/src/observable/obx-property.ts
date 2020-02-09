@@ -23,9 +23,7 @@ import { nextId } from '../utils';
 import { ObxFlag, SYMBOL_OBX, getObx } from './obx';
 import { getProxiedValue } from './proxy';
 import { is } from './compare';
-import { isPrimitive } from '@recore/utils';
-import { invariant } from '@recore/utils';
-import { hasOwnProperty } from '@recore/utils';
+import { isPrimitive, invariant, hasOwnProperty } from '@recore/utils';
 
 function getVer(obj: any): number {
   const obx = getObx(obj);
