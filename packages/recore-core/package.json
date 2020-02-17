@@ -24,7 +24,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@recore/core-obx": "^1.0.4",
+    "@recore/obx-react": "^1.0.4",
     "@recore/obx": "^1.0.4",
     "@recore/utils": "^1.0.4",
     "classnames": "^2.2.6",

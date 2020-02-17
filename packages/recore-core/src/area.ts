@@ -2,7 +2,7 @@ import { Fragment, ReactNode, Component, ReactType, createElement } from 'react'
 import { nextId } from '@recore/obx/lib/utils';
 import { Reaction } from '@recore/obx/lib/reaction';
 import { nextTick, computed } from '@recore/obx';
-import { getReaction } from '@recore/core-obx';
+import { getReaction } from '@recore/obx-react';
 import { hasOwnProperty, splitPath } from '@recore/utils';
 import { create } from './utils';
 import X, { DisplayError, isDisplayError } from './x';

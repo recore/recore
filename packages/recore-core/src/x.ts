@@ -1,6 +1,6 @@
 import { Component, createElement as h, ReactNode } from 'react';
 import { globals, reportError } from './utils';
-import { observer } from '@recore/core-obx';
+import { observer } from '@recore/obx-react';
 import Area from './area';
 
 export interface XState {
