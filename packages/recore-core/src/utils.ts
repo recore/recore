@@ -41,3 +41,8 @@ export const globals: {
     }
   },
 };
+
+let seedId = 0;
+export function nextId() {
+  return (++seedId).toString(36).toLocaleLowerCase();
+}

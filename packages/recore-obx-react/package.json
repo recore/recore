@@ -1,5 +1,5 @@
 {
-  "name": "@recore/core-obx",
+  "name": "@recore/obx-react",
   "version": "1.0.4",
   "main": "lib/observer.js",
   "scripts": {
@@ -12,7 +12,7 @@
     "url": "git+ssh://git@github.com/recore/recore.git",
     "directory": "packages/recore-utils"
   },
-  "homepage": "http://github.com/recore/recore/packages/recore-core-obx",
+  "homepage": "http://github.com/recore/recore/packages/recore-obx-react",
   "authors": [
     "onbing <me@yanbingbing.com> (https://github.com/yanbingbing)"
   ],

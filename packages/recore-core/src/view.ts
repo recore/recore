@@ -2,11 +2,12 @@ import classNames from 'classnames';
 import { ReactType, ReactNode } from 'react';
 import { isPlainObject, hasOwnProperty, looseEqual, looseIndexOf, shallowEqual, cloneDeep } from '@recore/utils';
 import { shouldCompute, untracked } from '@recore/obx/lib/derivation';
-import { autorun, Reaction } from '@recore/obx/lib/reaction';
+import { Reaction } from '@recore/obx/lib/reaction';
 import { $set, $get } from '@recore/obx/lib/utils';
 import { defineObxProperty } from '@recore/obx/lib/observable/obx-property';
 import { ObxFlag, getObx } from '@recore/obx/lib/observable/obx';
 import Area from './area';
+import { nextId } from './utils';
 
 const PROP_GS = Symbol.for('prop-gs');
 
@@ -62,33 +63,32 @@ export default class View {
 
       constructor(getter: () => any) {
         defineObxProperty(this, 'value', {}, {}, ObxFlag.DEEP);
-        // autorun(() => {
-        //   console.log('------ [autorun] shadowModel value changes to', getter());
-        //   this.value = getter && getter();
-        // }, true);
+        const that = this;
+        const reactionName = 'ViewAutorun@' + nextId();
         const reaction = new Reaction(
-          name,
-          () => {
-            // this.track(reactionRunner);
-            this.value = getter && getter();
+          reactionName,
+          function(this: Reaction) {
+            this.track(() => {
+              // console.log('------ [autorun] shadowModel value changes to', getter());
+              that.value = getter && getter();
+            });
           },
           0,
-          0,
+          0
         );
         reaction.runReaction();
       }
     }
 
-    const processXField = (getter: () => any, maps: any, events: any) => {
+    const processXModelMediator = (getter: () => any, maps: any, events: any) => {
       if (!this.shadowModel) {
         this.shadowModel = new ShadowModel(getter);
       }
 
-      // output
       addToEvents(events, 'onChange', (data: any) => {
         return assign((v) => {
-          console.log('------ [onChange] shadowModel value changes to', v);
-          this.shadowModel.value = v.value ? v.value : v;
+          // console.log(`------ ${this.props.fieldId} [onChange] shadowModel value changes to`, v);
+          this.shadowModel.value = hasOwnProperty(v, 'value') ? v.value : v;
         }, () => this.shadowModel.value, data);
       });
       const data = this.shadowModel.value;
@@ -97,10 +97,7 @@ export default class View {
         component === 'input'
           ? maps.type === 'radio' || maps.type === 'checkbox'
           : (component as any).propTypes && (component as any).propTypes.checked;
-      // input
       if (useChecked) {
-        // FIXME: checked xmodelAssign
-        // this.xmodelAssign!.prop = 'checked';
         if (component === 'input' && maps.type === 'checkbox') {
           if (Array.isArray(data)) {
             maps.checked = looseIndexOf(data, maps.value) > -1;
@@ -115,7 +112,7 @@ export default class View {
       }
     };
 
-    const processXmodel = (xmodel: [() => any, (v: any) => void], maps: any, events: any) => {
+    const processXModel = (xmodel: [() => any, (v: any) => void], maps: any, events: any) => {
       this.xmodelAssign = undefined;
       if (!xmodel) {
         return;
@@ -218,9 +215,9 @@ export default class View {
       processRef(maps);
       if ('x-model' in maps) {
         if (maps['x-model'].mediator) {
-          processXField(maps['x-model'].mediator[0], maps, events);
+          processXModelMediator(maps['x-model'].mediator[0], maps, events);
         } else {
-          processXmodel(maps['x-model'], maps, events);
+          processXModel(maps['x-model'], maps, events);
         }
         delete maps['x-model'];
       }
@@ -290,6 +287,10 @@ export default class View {
   }
 
   set(key: string, val: any) {
+    if (this.shadowModel && key === 'value') {
+      this.shadowModel.value = val;
+      return;
+    }
     if (hasOwnProperty(this._props, key)) {
       this._props![key] = val;
     } else {
