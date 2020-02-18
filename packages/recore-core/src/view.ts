@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import { ReactType, ReactNode } from 'react';
-import { isPlainObject, hasOwnProperty, looseEqual, looseIndexOf, shallowEqual, cloneDeep } from '@recore/utils';
+import { isPlainObject, hasOwnProperty, looseEqual, looseIndexOf, shallowEqual, cloneDeep, logger } from '@recore/utils';
 import { shouldCompute, untracked } from '@recore/obx/lib/derivation';
 import { Reaction } from '@recore/obx/lib/reaction';
 import { $set, $get } from '@recore/obx/lib/utils';
@@ -69,7 +69,7 @@ export default class View {
           reactionName,
           function(this: Reaction) {
             this.track(() => {
-              // console.log('------ [autorun] shadowModel value changes to', getter());
+              logger.log('------ [autorun] shadowModel value changes to', getter());
               that.value = getter && getter();
             });
           },
@@ -87,7 +87,7 @@ export default class View {
 
       addToEvents(events, 'onChange', (data: any) => {
         return assign((v) => {
-          // console.log(`------ ${this.props.fieldId} [onChange] shadowModel value changes to`, v);
+          logger.log(`------ ${this.props.fieldId} [onChange] shadowModel value changes to`, v);
           this.shadowModel.value = hasOwnProperty(v, 'value') ? v.value : v;
         }, () => this.shadowModel.value, data);
       });

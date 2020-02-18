@@ -11,3 +11,4 @@ export * from './shallow-equal';
 export * from './throttle';
 export * from './split-path';
 export * from './clone-deep';
+export * from './logger';
