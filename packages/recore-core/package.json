@@ -1,6 +1,6 @@
 {
   "name": "@recore/core",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "main": "lib/index.js",
   "scripts": {
     "clean": "rm -rf lib",
@@ -24,9 +24,9 @@
     "access": "public"
   },
   "dependencies": {
-    "@recore/obx": "^1.0.6",
-    "@recore/obx-react": "^1.0.5",
-    "@recore/utils": "^1.0.4",
+    "@recore/obx": "^1.0.7",
+    "@recore/obx-react": "^1.0.6",
+    "@recore/utils": "^1.0.6",
     "classnames": "^2.2.6",
     "react": "^16",
     "react-dom": "^16"
