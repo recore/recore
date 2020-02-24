@@ -61,7 +61,7 @@ export default class View {
     class ShadowModel {
       value: any;
 
-      constructor(getter: () => any) {
+      constructor(getter: () => any, id?: string) {
         defineObxProperty(this, 'value', {}, {}, ObxFlag.DEEP);
         const that = this;
         const reactionName = 'ViewAutorun@' + nextId();
@@ -69,7 +69,7 @@ export default class View {
           reactionName,
           function(this: Reaction) {
             this.track(() => {
-              logger.log('------ [autorun] shadowModel value changes to', getter());
+              logger.log(`------ ${id || ''} [autorun] shadowModel value changes to`, getter());
               that.value = getter && getter();
             });
           },
@@ -82,7 +82,7 @@ export default class View {
 
     const processXModelMediator = (getter: () => any, maps: any, events: any) => {
       if (!this.shadowModel) {
-        this.shadowModel = new ShadowModel(getter);
+        this.shadowModel = new ShadowModel(getter, maps.fieldId);
       }
 
       addToEvents(events, 'onChange', (data: any) => {

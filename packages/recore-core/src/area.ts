@@ -214,8 +214,8 @@ export default class Area {
     return renderArea(this.child({ id, virtual }), render);
   }
 
-  fork(data: CursorData, render: (area: Area) => ReactNode) {
-    return tryRender(() => renderArea(this.produce(data), render));
+  fork(data: CursorData, render: (area: Area) => ReactNode, flag?: number) {
+    return tryRender(() => renderArea(this.produce(data, flag), render));
   }
 
   // will support @1.6
@@ -274,20 +274,31 @@ export default class Area {
   }
 
   private marked: boolean = false;
-  private produce(data: CursorData) {
+  private produce(data: CursorData, flag?: number) {
     const id = data.$id;
-    if (!this.marked) {
-      this.marked = true;
-      this.areas.forEach(item => {
-        item.willSleep = true;
-      });
-      this.areas = [];
-      nextTick(() => {
-        this.marked = false;
+    // 按照 flag 来决定对 this.areas 如何操作
+    if (typeof flag === 'number') {
+      if (flag === -1) {
+        this.areas.forEach(item => {
+          item.willSleep = true;
+        });
+        this.areas = [];
+      } else if (flag === 1) {
         this.dispose();
-      });
+      }
+    } else {
+      if (!this.marked) {
+        this.marked = true;
+        this.areas.forEach(item => {
+          item.willSleep = true;
+        });
+        this.areas = [];
+        nextTick(() => {
+          this.marked = false;
+          this.dispose();
+        });
+      }
     }
-
     let area: Area;
     if (hasOwnProperty(this.areasMap, id)) {
       area = this.areasMap[id]!;
@@ -362,26 +373,29 @@ function tryRender(render: () => any): any {
   }
 }
 
-function iterMap(data: Map<any, any>, fn: (item: any, key: any) => void) {
-  data.forEach(fn);
-}
-
-function iterSet(data: Set<any>, fn: (item: any, key: any) => void) {
-  let index = 0;
+function iterateCollection(data: Set<any> | Map<any, any>, fn: (item: any, key: any, flag?: number) => void) {
+  let index = 0, len = data.size;
   data.forEach(item => {
-    fn(item, index++);
+    const flag = index === 0 ? -1 : (index === len - 1 ? 1 : 0);
+    fn(item, index++, flag);
   });
 }
 
-function loop(data: any, delegate: (key: string | number, val: any) => any) {
+function loop(data: any, delegate: (key: string | number, val: any, flag?: number) => any) {
   if (Array.isArray(data)) {
-    return data.map((item, index) => delegate(index, item));
+    return data.map((item, index) => {
+      // flag: -1: 第一个元素 1: 最后一个元素 0: 中间元素
+      const flag = index === 0 ? -1 : (index === data.length - 1 ? 1 : 0);
+      return delegate(index, item, flag);
+    });
   }
 
   if (typeof data === 'number') {
     const ret = new Array(data);
     for (let i = 0; i < data; i++) {
-      ret[i] = delegate(i, i + 1);
+      // flag: -1: 第一个元素 1: 最后一个元素 0: 中间元素
+      const flag = i === 0 ? -1 : (i === data - 1 ? 1 : 0);
+      ret[i] = delegate(i, i + 1, flag);
     }
     return ret;
   }
@@ -390,16 +404,17 @@ function loop(data: any, delegate: (key: string | number, val: any) => any) {
     if (data instanceof Set || data instanceof Map) {
       const frags: any[] = [];
 
-      const fn = (item: any, key: any): void => {
-        frags.push(delegate(key, item));
+      const fn = (item: any, key: any, flag?: number): void => {
+        frags.push(delegate(key, item, flag));
       };
-      data instanceof Map ? iterMap(data, fn) : iterSet(data, fn);
+      iterateCollection(data, fn);
 
       return frags;
     }
 
-    return Object.keys(data).map(key => {
-      return delegate(key, (data as any)[key]);
+    return Object.keys(data).map((key, index) => {
+      const flag = index === 0 ? -1 : (index === data.length - 1 ? 1 : 0);
+      return delegate(key, (data as any)[key], flag);
     });
   }
 
