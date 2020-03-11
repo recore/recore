@@ -32,6 +32,7 @@ export function createHistory(options: HistoryOptions): History {
 export class Navigator {
   private options: HistoryOptions | null = null;
   private _history: History | null = null;
+  private _inited: boolean = false;
 
   get history(): History {
     if (this._history) {
@@ -48,12 +49,18 @@ export class Navigator {
   init(options: HistoryMode | HistoryOptions | History = {}) {
     if (isHistory(options)) {
       this._history = options;
+      this._inited = true;
       return;
     }
     if (typeof options === 'string') {
       options = { mode: options };
     }
     this.options = options;
+    this._inited = true;
+  }
+
+  hasInited() {
+    return this._inited;
   }
 
   goto(path: string, state?: LocationState, reload?: true): void {

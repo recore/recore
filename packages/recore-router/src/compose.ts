@@ -108,7 +108,11 @@ export default function compose(render: RenderFunction, ControllerType?: any, ro
   function compileRequest(props: any, state: any) {
     let { controller } = state;
     const { match, location, defined, ...extras } = props;
-    const loc = navigator.history!.location;
+    let loc = {} as any;
+    // 支持 compose 后的组件直接对外使用，并不需要初始化 navigator 的场景
+    if (navigator.hasInited()) {
+      loc = navigator.history!.location;
+    }
     const reload = loc.state && loc.state.__reload;
     if (match instanceof MatchResult) {
       const uri = loc.pathname + loc.search;
