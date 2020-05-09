@@ -1,6 +1,6 @@
 {
   "name": "@recore/obx",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "scripts": {
     "clean": "rm -rf lib",
     "watch": "tsc -w",

@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.0.10](https://github.com/recore/recore/compare/@recore/router@1.0.9...@recore/router@1.0.10) (2020-05-09)
+
+**Note:** Version bump only for package @recore/router
+
+
+
+
+
 ## [1.0.9](https://github.com/recore/recore/compare/@recore/router@1.0.8...@recore/router@1.0.9) (2020-03-25)
 
 
