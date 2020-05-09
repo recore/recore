@@ -84,7 +84,7 @@ function makeComponentReactive(this: any, render: any) {
     if (exception) {
       throw exception;
     }
-    return rendering || baseRender();
+    return rendering;
   }
 
   // Generate friendly name for debugging

@@ -26,6 +26,7 @@ export function reportError(err: any) {
   }
 }
 
+(window as any).AliMonitorQueue || ((window as any).AliMonitorQueue = []);
 export const globals: {
   renderError?: (err: any) => ReactNode;
   reportError?: (err: any) => void;
@@ -36,7 +37,9 @@ export const globals: {
       const { AliMonitor } = global as any;
 
       if (AliMonitor) {
-        AliMonitor.reportError(typeof e === 'string' ? new Error(e) : e);
+        (window as any).AliMonitorQueue.push(() => {
+          AliMonitor.reportError(typeof e === 'string' ? new Error(e) : e);
+        })
       }
     }
   },

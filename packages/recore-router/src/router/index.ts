@@ -80,7 +80,6 @@ function patchBeforeRoute(beforeRoute: any) {
       if (!(window as any).AliMonitorQueue) {
         (window as any).AliMonitorQueue = [];
       }
-      document.body.dataset.spm = spmB;
       (window as any).AliMonitorQueue.push(() => {
         (window as any).AliMonitor.switchPage({ spmA, spmB });
       });

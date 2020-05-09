@@ -24,7 +24,7 @@ export class Reaction implements IDerivation {
   private sleeping = false;
   private running = false;
 
-  constructor(public name: string, private check: () => void, public level: number = 0, throttleWait: number = 10) {
+  constructor(public name: string, private check: () => void, public level: number = 0, throttleWait: number = 0) {
     if (throttleWait > 0) {
       this.run = throttle(this.runReaction.bind(this), throttleWait);
     } else {
