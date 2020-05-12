@@ -39,7 +39,7 @@ export class Navigator {
       return this._history;
     }
 
-    invariant(this.options, 'should not use "navigator.history" before bootstrap');
+    // invariant(this.options, 'should not use "navigator.history" before bootstrap');
 
     this._history = createHistory(this.options || {});
 
