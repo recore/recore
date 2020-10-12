@@ -1,4 +1,4 @@
-import { ReactInstance } from 'react';
+import { ErrorInfo, ReactInstance } from 'react';
 import { initializeDecoratorTarget } from '@recore/obx';
 import { hasOwnProperty, setPrototypeOf, splitPath } from '@recore/utils';
 import { $get, $set, addHiddenFinalProp } from '@recore/obx/lib/utils';
@@ -68,6 +68,14 @@ export abstract class ViewController<T extends Object = PageRequest> {
 
   $didMount() {
     // 页面视图挂载 times: 1
+  }
+
+  $didUpdate(prevProps: any, prevState: any, snapshot: any) {
+    // 页面更新 times: 0+
+  }
+
+  $didCatch(error: Error, info: ErrorInfo) {
+    // 错误捕捉 times: 0+
   }
 
   $destroy() {
