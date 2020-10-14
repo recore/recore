@@ -1,4 +1,4 @@
-import { Component, createElement as h, ReactNode } from 'react';
+import { Component, createElement as h, ReactNode, ErrorInfo } from 'react';
 import { globals, reportError } from './utils';
 import { observer } from '@recore/obx-react';
 import Area from './area';
@@ -73,6 +73,15 @@ export default observer(
 
     componentDidUpdate() {
       this.area.connect(this);
+      if (typeof this.area.scope?.$didUpdate === 'function') {
+        this.area.scope.$didUpdate();
+      }
+    }
+
+    componentDidCatch(err: Error, info: ErrorInfo) {
+      if (typeof this.area.scope?.$didCatch === 'function') {
+        this.area.scope.$didCatch(err, info);
+      }
     }
 
     render() {
