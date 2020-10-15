@@ -47,53 +47,57 @@ export function isDisplayError(obj: any): obj is ReactNode {
   return obj && obj.type === DisplayError;
 }
 
-export default observer(
-  class extends Component<XProps, XState> {
-    static displayName = 'X';
+class BaseX extends Component<XProps, XState> {
+  static displayName = 'X';
 
+  state: XState = { error: null };
+  protected area: Area = this.props.area;
+
+  shouldComponentUpdate(nextProps: XProps, nextState: XState) {
+    if (nextProps.area !== this.area) {
+      this.area.purge();
+      this.area = nextProps.area;
+      return true;
+    }
+    return this.area.inExpression || nextState.error != null;
+  }
+
+  componentDidMount() {
+    this.area.connect(this);
+  }
+
+  componentDidUpdate() {
+    this.area.connect(this);
+    if (typeof this.area.scope?.$didUpdate === 'function') {
+      this.area.scope.$didUpdate();
+    }
+  }
+
+  render() {
+    const { error } = this.state;
+    if (error) {
+      return renderError(error);
+    }
+
+    try {
+      return this.props.render(this.area);
+    } catch (e) {
+      return renderError(e);
+    }
+  }
+}
+
+export const ErrorBoundaryLessX = observer(BaseX);
+
+export default observer(
+  class extends BaseX {
     static getDerivedStateFromError(error: any) {
       return { error };
-    }
-
-    state: XState = { error: null };
-    private area: Area = this.props.area;
-
-    shouldComponentUpdate(nextProps: XProps, nextState: XState) {
-      if (nextProps.area !== this.area) {
-        this.area.purge();
-        this.area = nextProps.area;
-        return true;
-      }
-      return this.area.inExpression || nextState.error != null;
-    }
-
-    componentDidMount() {
-      this.area.connect(this);
-    }
-
-    componentDidUpdate() {
-      this.area.connect(this);
-      if (typeof this.area.scope?.$didUpdate === 'function') {
-        this.area.scope.$didUpdate();
-      }
     }
 
     componentDidCatch(err: Error, info: ErrorInfo) {
       if (typeof this.area.scope?.$didCatch === 'function') {
         this.area.scope.$didCatch(err, info);
-      }
-    }
-
-    render() {
-      const { error } = this.state;
-      if (error) {
-        return renderError(error);
-      }
-
-      try {
-        return this.props.render(this.area);
-      } catch (e) {
-        return renderError(e);
       }
     }
   }
