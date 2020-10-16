@@ -5,7 +5,7 @@ import { nextTick, computed } from '@recore/obx';
 import { getReaction } from '@recore/obx-react';
 import { hasOwnProperty, splitPath } from '@recore/utils';
 import { create } from './utils';
-import X, { DisplayError, isDisplayError } from './x';
+import X, { DisplayError, ErrorBoundaryLessX, isDisplayError } from './x';
 import View from './view';
 
 export interface AreaConfig {
@@ -426,7 +426,7 @@ function renderArea(area: any, render: (area: any) => ReactNode) {
     return render(area);
   }
 
-  return createElement(X, {
+  return createElement(area?.scope?.$didCatch ? X : ErrorBoundaryLessX, {
     key: area.id,
     area,
     render,
