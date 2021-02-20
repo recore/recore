@@ -238,3 +238,55 @@ export const globals: {
     }
   },
 };
+
+function decode(s: string): string {
+  if (s) {
+    s = s.replace(/\+/g, '%20');
+    s = decodeURIComponent(s);
+  }
+  return s;
+}
+
+export function parseQuery(search: string): object {
+  const params: any = {};
+
+  if (!search) {
+    return params;
+  }
+
+  if (search.indexOf('?') === 0) {
+    search = search.substring(1);
+  }
+
+  const ps = search.split(/[&;]/);
+  let p;
+  let n;
+  let k;
+  let v;
+
+  for (let i = 0, l = ps.length; i < l; i++) {
+    p = ps[i];
+    n = p.indexOf('=');
+
+    if (n === 0) {
+      continue;
+    }
+    if (n < 0) {
+      k = p;
+      v = null;
+    } else {
+      k = decode(p.substring(0, n));
+      v = decode(p.substring(n + 1));
+    }
+
+    if (hasOwnProperty(params, k)) {
+      if (!Array.isArray(params[k])) {
+        params[k] = [params[k]];
+      }
+      params[k].push(v);
+    } else {
+      params[k] = v;
+    }
+  }
+  return params;
+}

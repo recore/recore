@@ -1,6 +1,7 @@
 import { Component, createElement, Fragment, FunctionComponentElement, ProviderProps } from 'react';
+import { globals } from '@recore/core/lib/utils';
 import navigator from '../navigator';
-import { matchPath, MatchResult, locationIs } from './utils';
+import { matchPath, MatchResult, locationIs, generateCommonRouterProps } from './utils';
 import RouteContext from './route-context';
 import { RouteProps } from './route';
 import { hasOwnProperty } from '@recore/utils';
@@ -12,7 +13,12 @@ export interface RouterProps {
 }
 type RouteElement = FunctionComponentElement<ProviderProps<RouteContext>>;
 
-export default class Router extends Component<RouterProps> {
+interface RouterState {
+  hasError: boolean;
+  error?: Error;
+}
+
+export default class Router extends Component<RouterProps, RouterState> {
   private dispose: () => void;
   private contextMap: { [path: string]: RouteContext } = {};
   private location: any;
@@ -28,6 +34,15 @@ export default class Router extends Component<RouterProps> {
       }
       this.location = history.location;
     });
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    globals.reportError(error, errorInfo);
   }
 
   componentWillUnmount() {
@@ -80,11 +95,21 @@ export default class Router extends Component<RouterProps> {
       {
         value: this.getSubContext(route!.path, match),
       },
-      route!.children({ match, location, defined: route!.defined, ...rest }),
+      route!.children({
+        match,
+        location,
+        defined: route!.defined,
+        // 兼容 DSL 为 jsx 的情况
+        ...generateCommonRouterProps(location, match),
+        ...rest }),
     );
   }
 
   render() {
+    if (this.state.hasError) {
+      return globals.renderError(this.state.error);
+    }
+
     const { location } = navigator.history!;
     const currentUrl = location.pathname + location.search;
     let cacheMatch = false;

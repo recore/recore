@@ -1,4 +1,5 @@
 import { Component, createElement, StatelessComponent } from 'react';
+import { globals } from '@recore/core/lib/utils';
 import navigator from '../navigator';
 import { matchPath, MatchResult, locationIs } from './utils';
 import RouteContext from './route-context';
@@ -14,6 +15,11 @@ export interface RouteProps {
   defined?: RouteConfig;
 }
 
+interface RouteState {
+  hasError: boolean;
+  error?: Error;
+}
+
 function computeMatch(props: RouteProps, ctx: RouteContext) {
   const { computedMatch, path, strict, exact, sensitive } = props;
 
@@ -24,7 +30,7 @@ function computeMatch(props: RouteProps, ctx: RouteContext) {
   return matchPath(pathname, { path, strict, exact, sensitive }, ctx.match);
 }
 
-export default class Route extends Component<RouteProps> {
+export default class Route extends Component<RouteProps, RouteState> {
   static displayName = 'Route';
   private dispose: () => void;
   private location: any;
@@ -40,6 +46,15 @@ export default class Route extends Component<RouteProps> {
       }
       this.location = history.location;
     });
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    globals.reportError(error, errorInfo);
   }
 
   componentWillUnmount() {
@@ -47,6 +62,10 @@ export default class Route extends Component<RouteProps> {
   }
 
   render() {
+    if (this.state.hasError) {
+      return globals.renderError(this.state.error);
+    }
+
     const { children } = this.props;
 
     return createElement(RouteContext.Consumer, null, (ctx: RouteContext) => {

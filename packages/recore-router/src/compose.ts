@@ -5,7 +5,8 @@ import { ViewController } from '@recore/core';
 import { MatchResult } from './router/utils';
 import navigator from './navigator';
 import { prerendering } from './prerendering';
-import { hasOwnProperty, shallowEqual, invariant } from '@recore/utils';
+import { shallowEqual, invariant } from '@recore/utils';
+import { parseQuery } from './utils';
 
 export type RenderType = (c: any) => ReactNode;
 export interface RenderFunction {
@@ -19,58 +20,6 @@ export interface PageRequest {
   query: { [key: string]: any };
   params: { [key: string]: any };
   state: any;
-}
-
-function decode(s: string): string {
-  if (s) {
-    s = s.replace(/\+/g, '%20');
-    s = decodeURIComponent(s);
-  }
-  return s;
-}
-
-function parseQuery(search: string): object {
-  const params: any = {};
-
-  if (!search) {
-    return params;
-  }
-
-  if (search.indexOf('?') === 0) {
-    search = search.substring(1);
-  }
-
-  const ps = search.split(/[&;]/);
-  let p;
-  let n;
-  let k;
-  let v;
-
-  for (let i = 0, l = ps.length; i < l; i++) {
-    p = ps[i];
-    n = p.indexOf('=');
-
-    if (n === 0) {
-      continue;
-    }
-    if (n < 0) {
-      k = p;
-      v = null;
-    } else {
-      k = decode(p.substring(0, n));
-      v = decode(p.substring(n + 1));
-    }
-
-    if (hasOwnProperty(params, k)) {
-      if (!Array.isArray(params[k])) {
-        params[k] = [params[k]];
-      }
-      params[k].push(v);
-    } else {
-      params[k] = v;
-    }
-  }
-  return params;
 }
 
 export default function compose(render: RenderFunction, ControllerType?: any, routerView?: any): any {

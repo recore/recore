@@ -1,5 +1,7 @@
 import pathToRegexp from 'path-to-regexp';
+import { Location } from '@recore/history';
 import { shallowEqual } from '@recore/utils';
+import { parseQuery } from '../utils';
 
 const patternCache: any = {};
 const cacheLimit = 10000;
@@ -175,4 +177,14 @@ export function locationIs(loc1: any, loc2: any) {
     return false;
   }
   return shallowEqual(loc1.state, loc2.state);
+}
+
+export function generateCommonRouterProps(location: Location, match: MatchResult) {
+  return {
+    params: match?.params,
+    path: location?.pathname,
+    query: parseQuery(location?.search),
+    uri: location?.pathname + location?.search,
+    state: location?.state
+  }
 }

@@ -29,7 +29,7 @@ export function reportError(err: any) {
 (window as any).AliMonitorQueue || ((window as any).AliMonitorQueue = []);
 export const globals: {
   renderError?: (err: any) => ReactNode;
-  reportError?: (err: any) => void;
+  reportError?: (err: any, errorInfo?: any) => void;
 } = {
   reportError(e) {
     if (process.env.NODE_ENV === 'production') {
