@@ -10,10 +10,11 @@ import { RouteProps } from './route';
 import Redirect from './redirect';
 import Link from './link';
 import NavLink from './nav-link';
+import Route from './route';
 import { resolve, matchPath } from './utils';
 import withRouter from './with-router';
 
-export { Router, withRouter, Link, NavLink, matchPath };
+export { Router, withRouter, Link, NavLink, Route, Redirect, matchPath };
 
 export interface RouteConfig {
   main?: string;
