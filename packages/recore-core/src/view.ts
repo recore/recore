@@ -90,7 +90,7 @@ export default class View {
           logger.log(`------ ${this.props.fieldId} [onChange] shadowModel value changes to`, v);
           this.shadowModel.value = hasOwnProperty(v, 'value') ? v.value : v;
         }, () => this.shadowModel.value, data);
-      });
+      }, true);
       const data = this.shadowModel.value;
 
       const useChecked =
@@ -124,7 +124,7 @@ export default class View {
       }
       addToEvents(events, 'onChange', (data: any) => {
         return assign(setter, getter, data);
-      });
+      }, true);
       const data = getter();
       const useChecked =
         component === 'input'
@@ -379,9 +379,11 @@ function deepSet(origin: any, path: string[], val: any): any {
   return cloned;
 }
 
-function addToEvents(events: EventsMap, key: string, fn: any) {
+function addToEvents(events: EventsMap, key: string, fn: any, toTop?: boolean) {
   if (!hasOwnProperty(events, key)) {
     events[key] = [fn];
+  } else if (toTop) {
+    events[key].unshift(fn);
   } else {
     events[key].push(fn);
   }
