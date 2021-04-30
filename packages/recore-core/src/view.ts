@@ -124,7 +124,7 @@ export default class View {
       }
       addToEvents(events, 'onChange', (data: any) => {
         return assign(setter, getter, data);
-      }, true);
+      });
       const data = getter();
       const useChecked =
         component === 'input'
