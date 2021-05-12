@@ -196,7 +196,18 @@ function getView(area: Area | Area[] | null, vid: string, useRef: boolean): null
     return null;
   }
   if (Array.isArray(area)) {
-    return area.map(a => getView(a, vid, useRef)) as any;
+    // 获取 view
+    const views = area.map(a => getView(a, vid, false));
+    const result = useRef ? views.map(v => (v as View).$ref || v) : views;
+
+    // 增加批量操作 API，同时兼容特殊场景
+    const lastView = views[views.length - 1];
+    (result as any).get = (lastView as View).get.bind(lastView);
+    (result as any).set = (key: string, val: any) => {
+      views.forEach(v => (v as View).set(key, val));
+    };
+
+    return result;
   }
   return area.getView(vid, useRef);
 }
