@@ -126,11 +126,6 @@ export function createRouter(config: RoutesConfig, pagesMap: any, hooks: Hooks, 
           exact: route.exact != null ? route.exact : exact,
         };
 
-        if (route.children) {
-          ret.children = route.children;
-          return ret;
-        }
-
         if (route.redirect) {
           ret.children = ({ match }: any) =>
             h(Redirect, {
@@ -144,6 +139,8 @@ export function createRouter(config: RoutesConfig, pagesMap: any, hooks: Hooks, 
         if (route.main) {
           const key = resolve(route.main, baseDir);
           Component = pagesMap[key];
+        } else if (route.children) {
+          Component = route.children;
         } else {
           Component = () => null;
         }
