@@ -95,6 +95,7 @@ export class Reaction implements IDerivation {
   wakeup(sync: boolean = false) {
     if (this.sleeping) {
       this.sleeping = false;
+      this.scheduled = false;
       if (sync) {
         this.runReaction();
       } else {
