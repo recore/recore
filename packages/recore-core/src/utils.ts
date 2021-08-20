@@ -31,6 +31,9 @@ export const globals: {
   renderError?: (err: any) => ReactNode;
   reportError?: (err: any, errorInfo?: any) => void;
 } = {
+  renderError() {
+    return 'Render Error';
+  },
   reportError(e) {
     if (process.env.NODE_ENV === 'production') {
       // TODO refactor
@@ -39,7 +42,7 @@ export const globals: {
       if (AliMonitor) {
         (window as any).AliMonitorQueue.push(() => {
           AliMonitor.reportError(typeof e === 'string' ? new Error(e) : e);
-        })
+        });
       }
     }
   },
