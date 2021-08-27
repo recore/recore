@@ -1,4 +1,4 @@
-import { Component, createElement, Fragment, FunctionComponentElement, ProviderProps } from 'react';
+import { Component, createElement, Fragment, FunctionComponentElement, ProviderProps, RefObject } from 'react';
 import { globals } from '@recore/core/lib/utils';
 import navigator from '../navigator';
 import { matchPath, MatchResult, locationIs, generateCommonRouterProps } from './utils';
@@ -22,7 +22,8 @@ export default class Router extends Component<RouterProps, RouterState> {
   private dispose: () => void;
   private contextMap: { [path: string]: RouteContext } = {};
   private location: any;
-  private cachedRoutes: Array<{ url: string; el: RouteElement }> = [];
+  private cachedRoutes: Array<{ url: string; el: RouteElement; inst: RefObject<any> }> = [];
+  private prevKeepAliveUrl: string; // 最近一个keep alive的页面 url
 
   constructor(props: RouterProps) {
     super(props);
@@ -74,7 +75,7 @@ export default class Router extends Component<RouterProps, RouterState> {
     const { location } = navigator.history!;
     const { routes } = this.props;
 
-    for (let currentRoute of routes) {
+    for (const currentRoute of routes) {
       route = currentRoute;
       match = matchPath(location.pathname, route, (ctx || {}).match);
       if (match) {
@@ -87,22 +88,28 @@ export default class Router extends Component<RouterProps, RouterState> {
     };
   }
 
-  createRouteChildren(route: RouteProps, match: MatchResult): RouteElement {
+  createRouteChildren(route: RouteProps, match: MatchResult): {  element: RouteElement; instance: RefObject<any> } {
     const { routes, fixed, ...rest } = this.props;
     const { location } = navigator.history!;
-    return createElement(
-      RouteContext.Provider,
-      {
-        value: this.getSubContext(route!.path, match),
-      },
-      route!.children({
-        match,
-        location,
-        defined: route!.defined,
-        // 兼容 DSL 为 jsx 的情况
-        ...generateCommonRouterProps(location, match),
-        ...rest }),
-    );
+    const instance: any = { current: null };
+    return {
+      element: createElement(
+        RouteContext.Provider,
+        {
+          value: this.getSubContext(route!.path, match),
+        },
+        createElement(route!.children, {
+          match,
+          location,
+          defined: route!.defined,
+          // 兼容 DSL 为 jsx 的情况
+          ...generateCommonRouterProps(location, match),
+          ...rest,
+          ref: (ref: any) => instance.current = ref, // 使用 callback 模式，兼容 react 16.3 以下版本
+        })
+      ),
+      instance,
+    };
   }
 
   render() {
@@ -126,26 +133,41 @@ export default class Router extends Component<RouterProps, RouterState> {
         );
       }
 
-      const routeEl = this.createRouteChildren(route, match);
+      if (this.prevKeepAliveUrl && this.prevKeepAliveUrl !== currentUrl) {
+        const prevKeepAliveRoute = this.cachedRoutes.find(cache => cache.url === this.prevKeepAliveUrl);
+        if (typeof prevKeepAliveRoute?.inst?.current?.$deactivated === 'function') {
+          // 缓存的路由被切走，触发失活的钩子
+          prevKeepAliveRoute.inst.current.$deactivated();
+          this.prevKeepAliveUrl = '';
+        }
+      }
+
       if (route && route.defined && route.defined.keepAlive) {
         // 当前路由匹配到缓存
         cacheMatch = true;
-        if (this.cachedRoutes.find(cache => cache.url === currentUrl)) {
-          // 缓存命中
-          // TODO: add lifecycle hooks
-        } else {
-          this.cachedRoutes = [...this.cachedRoutes, { url: location.pathname + location.search, el: routeEl }];
+        this.prevKeepAliveUrl = currentUrl;
+        const cachedRoute = this.cachedRoutes.find(cache => cache.url === currentUrl);
+        if (!cachedRoute) {
+          const { element, instance } = this.createRouteChildren(route, match);
+          this.cachedRoutes = [
+            ...this.cachedRoutes,
+            { url: location.pathname + location.search, el: element, inst: instance },
+          ];
+        } else if (typeof cachedRoute?.inst?.current?.$activated === 'function') {
+          // 缓存命中，触发激活的钩子
+          cachedRoute.inst.current.$activated();
         }
       }
+
       return createElement(
         Fragment,
         null,
-        cacheMatch ? null : this.createRouteChildren(route, match),
+        cacheMatch ? null : this.createRouteChildren(route, match).element,
         this.cachedRoutes.map(cache => {
           const isRender = cacheMatch && currentUrl === cache.url;
           return createElement('div', { key: cache.url, style: { display: isRender ? 'block' : 'none' } }, cache.el);
-        }),
+        })
       );
-    })
+    });
   }
 }

@@ -1,4 +1,4 @@
-import { createElement as h, StatelessComponent } from 'react';
+import { createElement as h, forwardRef, StatelessComponent } from 'react';
 import { LocationDescriptor } from '@recore/history';
 import { ViewController } from '@recore/core';
 import compose from '../compose';
@@ -148,12 +148,13 @@ export function createRouter(config: RoutesConfig, pagesMap: any, hooks: Hooks, 
         if (!patchedBeforeRoute) {
           ret.children = (props: any) => h(Component, props);
         } else {
-          ret.children = (props: any) =>
+          ret.children = forwardRef((props: any, ref) =>
             h(RouteWrapper, {
               ...props,
               beforeRoute: patchedBeforeRoute,
               Component,
-            });
+              forwardedRef: ref,
+            }));
         }
         return ret;
       })
