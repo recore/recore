@@ -13,6 +13,7 @@ interface RouteWrapperProps {
   Component: ComponentType<any>;
   beforeRoute: (route: RouteConfig, match: any, history: any) => any;
   match: any;
+  forwardedRef: any;
 }
 
 interface RouteWrapperState {
@@ -83,9 +84,9 @@ class RouteWrapper extends Component<RouteWrapperProps, RouteWrapperState> {
   }
 
   render() {
-    const { Component, beforeRoute, ...others } = this.props;
+    const { Component, beforeRoute, forwardedRef, ...others } = this.props;
     if (this.state.authPassed === AuthStatus.pass) {
-      return h(Component, others as any);
+      return h(Component, { ...others, ref: forwardedRef } as any);
     } else if (this.state.authPassed === AuthStatus.fail) {
       return h('div', null, 'You have no authority to view this page');
     }

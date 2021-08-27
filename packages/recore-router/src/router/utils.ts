@@ -185,6 +185,6 @@ export function generateCommonRouterProps(location: Location, match: MatchResult
     path: location?.pathname,
     query: parseQuery(location?.search),
     uri: location?.pathname + location?.search,
-    state: location?.state
-  }
+    state: location?.state,
+  };
 }
