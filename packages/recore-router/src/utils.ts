@@ -227,6 +227,7 @@ export const globals: {
   renderError?: (err: any) => ReactNode;
   reportError?: (err: any) => void;
 } = {
+  renderError(e) { return 'Render Error'; },
   reportError(e) {
     if (process.env.NODE_ENV === 'production') {
       // TODO refactor
