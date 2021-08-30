@@ -91,6 +91,21 @@ export default class Router extends Component<RouterProps, RouterState> {
   createRouteChildren(route: RouteProps, match: MatchResult): {  element: RouteElement; instance: RefObject<any> } {
     const { routes, fixed, ...rest } = this.props;
     const { location } = navigator.history!;
+    let props: any = {
+      match,
+      location,
+      defined: route!.defined,
+      // 兼容 DSL 为 jsx 的情况
+      ...generateCommonRouterProps(location, match),
+      ...rest,
+    };
+    const instance: any = { current: null };
+    if (typeof route?.children !== 'function') {
+      props = {
+        ...props,
+        ref: (ref: any) => instance.current = ref, // 使用 callback 模式，兼容 react 16.3 以下版本
+      };
+    }
     const instance: any = { current: null };
     return {
       element: createElement(
@@ -98,15 +113,7 @@ export default class Router extends Component<RouterProps, RouterState> {
         {
           value: this.getSubContext(route!.path, match),
         },
-        createElement(route!.children, {
-          match,
-          location,
-          defined: route!.defined,
-          // 兼容 DSL 为 jsx 的情况
-          ...generateCommonRouterProps(location, match),
-          ...rest,
-          ref: (ref: any) => instance.current = ref, // 使用 callback 模式，兼容 react 16.3 以下版本
-        })
+        createElement(route!.children, props)
       ),
       instance,
     };
