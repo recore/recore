@@ -106,6 +106,7 @@ export default class Router extends Component<RouterProps, RouterState> {
         ref: (ref: any) => instance.current = ref, // 使用 callback 模式，兼容 react 16.3 以下版本
       };
     }
+    const instance: any = { current: null };
     return {
       element: createElement(
         RouteContext.Provider,
