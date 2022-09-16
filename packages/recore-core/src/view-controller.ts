@@ -195,21 +195,37 @@ function getView(area: Area | Area[] | null, vid: string, useRef: boolean): null
   if (!area) {
     return null;
   }
-  if (Array.isArray(area)) {
-    // 获取 view
-    const views = area.map(a => getView(a, vid, false));
-    const result = useRef ? views.map(v => (v as View).$ref || v) : views;
 
-    // 增加批量操作 API，同时兼容特殊场景
-    const lastView = views[views.length - 1];
-    (result as any).get = (lastView as View).get.bind(lastView);
-    (result as any).set = (key: string, val: any) => {
-      views.forEach(v => (v as View).set(key, val));
-    };
-
-    return result;
+  if (!Array.isArray(area)) {
+    return area.getView(vid, useRef);
   }
-  return area.getView(vid, useRef);
+
+  // 获取 view
+  const views = area.map(a => getView(a, vid, false));
+  const result = useRef ? views.map((v: View) => v?.$ref || v) : views;
+
+  // 增加批量操作 API，同时兼容特殊场景
+  (result as any).get = (...rest) => {
+    const validViews = views.filter(v => !!v);
+    const { length } = validViews;
+    if (!length) {
+      return;
+    }
+
+    const lastView = (validViews[length - 1] as View);
+    if (typeof lastView?.get === 'function') {
+      return lastView.get.apply(lastView, rest);
+    }
+  };
+  (result as any).set = (key: string, val: any) => {
+    views.forEach((v: View) => {
+      if (typeof v?.set === 'function') {
+        v.set(key, val);
+      }
+    });
+  };
+
+  return result;
 }
 
 const supportProxy = 'Proxy' in global;
