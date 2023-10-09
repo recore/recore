@@ -241,10 +241,18 @@ export const globals: {
 };
 
 function decode(s: string): string {
-  if (s) {
+  if (!s) {
+    return s;
+  }
+
+  try {
     s = s.replace(/\+/g, '%20');
     s = decodeURIComponent(s);
+  } catch (error) {
+    /* eslint-disable-next-line */
+    console.error(error);
   }
+
   return s;
 }
 
